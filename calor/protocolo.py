@@ -41,10 +41,6 @@ NIVEIS = {
         "quando": "Sensação térmica de 48 °C ou mais por 2 horas ou mais, ou calor perigoso por vários dias seguidos."},
 }
 
-# Taxa metabólica admissível de referência (NR-15) por nível
-CLASSE_MADM = {1: "≥600 W (irrestrito)", 2: "430–599 W (trabalho pesado)", 3: "285–429 W (moderado com pausas)",
-               4: "145–284 W (apenas leve)", 5: "<140 W"}
-
 # Apresentação pública do índice ultravioleta, segundo OMS/WMO/UNEP/ICNIRP (2002).
 # O UVI físico é 40 vezes a irradiância eritematosa em W/m², ponderada pela curva CIE
 # (ISO 17166 / CIE S 007). A previsão já chega calculada pelo NOAA GFS; aqui apenas
@@ -102,7 +98,6 @@ def avaliar_dia(dia: pd.DataFrame) -> dict:
     pico_utci = float(np.max(utci))
     pico_temp = float(np.max(t2m))
     pico_ibutg = float(np.max(wbgt))
-    m_adm = float(np.clip(2004.0 - 56.5 * pico_ibutg, 100.0, 606.0))
 
     # Análise térmica da madrugada (00h às 06h)
     noite = (horas >= 0) & (horas <= 6)
@@ -157,7 +152,7 @@ def avaliar_dia(dia: pd.DataFrame) -> dict:
         h_ini = h_fim = None
         janela = "Sem janela crítica ativa"
 
-    return {"nivel": nivel, "gatilho": gatilho, "motivo": motivo, "m_adm": m_adm, "pico_ibutg": pico_ibutg,
+    return {"nivel": nivel, "gatilho": gatilho, "motivo": motivo, "pico_ibutg": pico_ibutg,
             "tmin_noite": tmin_noite, "noite_quente": noite_quente, "recuperacao_plena": recuperacao_plena,
             "recuperacao_profunda": recuperacao_profunda, "candidato_n2": nivel == 2, "tipo_n2": tipo_n2,
             "janela": janela, "janela_ini": h_ini, "janela_fim": h_fim, "_niveis_h": niveis_h, "_horas": horas,
