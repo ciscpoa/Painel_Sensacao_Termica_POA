@@ -168,17 +168,17 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .regua .ticks { position: relative; height: 34px; font-size: 10.5px; color: var(--muda); white-space: nowrap; }
 .regua .ticks span { position: absolute; transform: translateX(-50%); }
 .rotulo-grupo { margin: 16px 0 6px; color: var(--tinta2); font-size: 12px; font-weight: 650; letter-spacing: 0.035em; text-transform: uppercase; }
-.horas { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-block: 1px solid var(--grade); }
-.horas div { min-width: 0; padding: 8px 6px; }
-.horas .periodo { display: block; margin-top: 3px; color: var(--muda); font-size: 10px; line-height: 1.3; }
-.horas div + div { border-left: 1px solid var(--grade); }
-.horas div:first-child { padding-left: 0; }
+.horas { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+.horas > div { min-width: 0; min-height: 108px; padding: 9px 7px; border: 0; border-radius: 10px; display: flex; flex-direction: column; }
+.horas .periodo { display: block; margin-top: 4px; color: inherit; font-size: 10px; line-height: 1.3; opacity: 0.86; }
+.horas > div + div { border-left: 0; }
+.horas > div:first-child { padding-left: 7px; }
 .horas b { display: block; font-size: 20px; line-height: 1.2; }
-.resumo-faixa { display: flex; align-items: baseline; gap: 5px; }
+.resumo-faixa { display: flex; align-items: baseline; gap: 4px; }
 .resumo-faixa b { flex: none; }
-.texto-resumo { flex: 1; min-width: 0; font-size: 10.5px !important; line-height: 1.25 !important; }
-.intervalo { display: flex; align-items: center; gap: 4px; margin-top: 2px; color: var(--muda) !important; font-size: 10px !important; line-height: 1.25 !important; }
-.horas span { font-size: 11px; color: var(--tinta2); line-height: 1.3; display: flex; align-items: center; gap: 4px; }
+.texto-resumo { flex: 1; min-width: 0; font-size: 10px !important; line-height: 1.2 !important; }
+.rotulo-estresse { display: block; margin-top: auto; padding-top: 8px; font-size: 10px; font-weight: 750; line-height: 1.25; }
+.horas span { font-size: 11px; line-height: 1.3; display: flex; align-items: center; gap: 4px; }
 .ponto-faixa { width: 8px; height: 8px; flex: none; display: inline-block; border-radius: 2px; }
 .sensacao .explica { font-size: 13px; color: var(--tinta2); margin: 12px 0 0; }
 
@@ -330,8 +330,7 @@ footer .emergencia { font-size: 16px; }
   .cartao-topo { flex-direction: column; }
   .btn-tabela { align-self: flex-end; }
   .cartao-topo > div { padding-right: 0; }
-  .horas span { display: block; }
-  .horas .ponto-faixa { margin-bottom: 3px; }
+  .horas .texto-resumo { display: inline; }
 }
 @media print {
   .faixa-inst, .atalhos, .cabecalho .acoes, .btn-tabela, .compartilhar, details.tecnico { display: none !important; }
@@ -445,7 +444,7 @@ footer .emergencia { font-size: 16px; }
       <li>As regras entre dias consideram também os 3 dias anteriores. O horário crítico é o do nível final do dia.</li>
       <li>Chuva: previsão e estabilidade pelo NOAA/GFS no centro e na vizinhança de 55 km, com probabilidade de chuva diária ≥ 10, 25 e 50 mm em algum ponto da vizinhança (NMEP) pelo ensemble NOAA/GFS.</li>
     </ul>
-    <p><strong>Métodos:</strong> UTCI (Fiala et al., 2012; Bröde et al., 2012), temperatura radiante média no esquema ERA5-HEAT (Di Napoli et al., 2020), taxa metabólica admissível (NR-15, Anexo 3) e orientações da OMM (WMO-No. 1142). Índice UV: <a href="https://www.who.int/publications/i/item/9241590076" target="_blank" rel="noopener">OMS — Global Solar UV Index: A Practical Guide (2002)</a>.</p>
+    <p><strong>Métodos:</strong> UTCI (Fiala et al., 2012; Bröde et al., 2012), temperatura radiante média no esquema ERA5-HEAT (Di Napoli et al., 2020), orientações da OMM (WMO-No. 1142). Índice UV: <a href="https://www.who.int/publications/i/item/9241590076" target="_blank" rel="noopener">OMS — Global Solar UV Index: A Practical Guide (2002)</a>.</p>
   </details>
 </main>
 

@@ -43,6 +43,16 @@
   ];
   const faixa = (u) => FAIXAS.find((f) => u >= f.de && u < f.ate) || FAIXAS[4];
   const rotuloFaixa = (f) => (f.de < -50 ? `${f.nome} (<${f.ate} °C)` : f.ate > 90 ? `${f.nome} (≥${f.de} °C)` : `${f.nome} (${f.de}–${f.ate} °C)`);
+  function contrasteCor(a, b) {
+    const lum = (hex) => {
+      const canais = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+        .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * canais[0] + 0.7152 * canais[1] + 0.0722 * canais[2];
+    };
+    const l1 = lum(a), l2 = lum(b);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+  const textoFaixa = (f) => (contrasteCor(f.cor, "#0b0b0b") >= contrasteCor(f.cor, "#ffffff") ? "#0b0b0b" : "#ffffff");
 
   // ------------------------------------------------------------------ DOM
   function el(tag, attrs = {}, ...filhos) {
@@ -205,7 +215,6 @@
     return grupos;
   }
 
-  const intervaloFaixa = (f) => (f.de < -50 ? `<${f.ate} °C` : f.ate > 90 ? `≥${f.de} °C` : `${f.de}–${f.ate} °C`);
   const textoPeriodos = (grupos) => grupos.map((g) => {
     const a = H.tempo[g.inicio].slice(11, 13), b = H.tempo[g.fim].slice(11, 13);
     return g.inicio === g.fim ? `${a}h` : `${a}h às ${b}h`;
@@ -222,18 +231,18 @@
       el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica atual (UTCI)" : "Sensação térmica máxima (UTCI)",
         el("small", {}, ehAtual ? "valor da hora mais recente, em Porto Alegre" : "pico previsto para o dia selecionado")),
       el("div", { class: "valor" }, el("strong", {}, grau(valor)),
-        el("span", { class: "pilula-faixa", style: `background:${fx.cor};color:${fx.texto}` }, fx.nome),
+        el("span", { class: "pilula-faixa", style: `background:${fx.cor};color:${textoFaixa(fx)}` }, fx.nome),
         el("span", { class: "hora" }, `às ${hora}`)),
       ehAtual ? el("p", { class: "maximo" }, `Máxima prevista hoje: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}`) : null,
       regua(valor, ehAtual),
       el("div", { class: "rotulo-grupo" }, "Horas e períodos por faixa de estresse térmico"),
       el("div", { class: "horas", "aria-label": "Horas e períodos em cada faixa de estresse térmico" }, ...grupos.map(({ f, periodos }) => {
         const total = periodos.reduce((n, g) => n + g.fim - g.inicio + 1, 0), periodo = textoPeriodos(periodos);
-        const descricao = f.de === 9 ? " do dia sem estresse térmico" : ` do dia com estresse térmico ${f.rotulo.replace(/^estresse\s+/, "")}`;
-        return el("div", { class: "faixa-horas", title: `${total} h · ${f.rotulo} · ${periodo}` },
-          el("div", { class: "resumo-faixa" }, el("b", {}, `${total} h`), el("span", { class: "texto-resumo" }, descricao)),
-          el("span", { class: "intervalo" }, el("i", { class: "ponto-faixa", style: `background:${f.cor}` }), intervaloFaixa(f)),
-          el("small", { class: "periodo" }, periodo));
+        const rotulo = f.de === 9 ? "Sem estresse térmico" : `Estresse térmico ${f.rotulo.replace(/^estresse\s+/, "")}`;
+        return el("div", { class: "faixa-horas", style: `background:${f.cor};color:${textoFaixa(f)}`, title: `${total} h · ${f.rotulo} · ${periodo}` },
+          el("div", { class: "resumo-faixa" }, el("b", {}, `${total} h`), el("span", { class: "texto-resumo" }, " do dia")),
+          el("small", { class: "periodo" }, periodo),
+          el("span", { class: "rotulo-estresse" }, rotulo));
       })),
       el("p", { class: "explica" }, `A UTCI combina a temperatura do ar (máxima de ${grau(d.temp.max)}), a radiação solar, a umidade e o vento. Os alertas também consideram a duração do calor e o acúmulo entre dias.`),
     );
@@ -561,7 +570,6 @@
       ["Janela crítica", (d) => d.janela],
       ["Mínima da madrugada (0h–6h)", (d) => `${f1(d.tmin_noite)} °C`],
       ["Horas com UTCI ≥28 / ≥32 / ≥34 / ≥38", (d) => `${d.horas_utci_28} / ${d.horas_utci_32} / ${d.horas_utci_34} / ${d.horas_utci_38} h`],
-      ["Taxa metabólica admissível (NR-15)", (d) => `${f0(d.m_adm)} W · ${d.classe_madm}`],
     ];
     trocar($("tabela-tec"), el("table", {}, el("thead", {}, el("tr", {}, el("th", { scope: "col" }, ""), ...DIAS.map((d) => el("th", { scope: "col" }, `${d.dia_semana} ${ddmm(d.data)}`)))),
       el("tbody", {}, ...linhas.map(([rot, f]) => el("tr", {}, el("td", {}, rot), ...DIAS.map((d) => el("td", {}, f(d, d.modelos[modeloTec]))))))));
