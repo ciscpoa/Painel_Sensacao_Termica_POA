@@ -270,9 +270,9 @@
     const d = DIAS[selecionado], a = $("alerta");
     a.style.background = d.cor_bg; a.style.color = d.cor_fg;
     trocar(a,
-      el("div", { class: "nivel" }, el("span", { class: "num", style: `background:${d.cor_fg};color:${d.cor_bg}` }, `Nível ${d.nivel}`)),
-      el("p", { class: "protocolo" }, "Protocolo de Calor"),
-      el("h2", { class: "nome" }, d.nome),
+      el("div", { class: "nivel-nome" },
+        el("div", { class: "nivel" }, el("span", { class: "num", style: `background:${d.cor_fg};color:${d.cor_bg}` }, `Nível ${d.nivel}`)),
+        el("h2", { class: "nome" }, d.nome)),
       el("p", { class: "motivo" }, d.motivo),
       d.janela_ini != null ? el("div", { class: "janela" }, `Horário mais crítico: ${d.janela_ini}h às ${d.janela_fim}h`) : null,
       el("h3", {}, d.nivel > 1 ? "O que fazer" : "Recomendações"),
