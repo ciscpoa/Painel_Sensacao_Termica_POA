@@ -168,8 +168,9 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .regua .ticks { position: relative; height: 34px; font-size: 10.5px; color: var(--muda); white-space: nowrap; }
 .regua .ticks span { position: absolute; transform: translateX(-50%); }
 .rotulo-grupo { margin: 16px 0 6px; color: var(--tinta2); font-size: 12px; font-weight: 650; letter-spacing: 0.035em; text-transform: uppercase; }
-.horas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--grade); }
+.horas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); border-block: 1px solid var(--grade); }
 .horas div { min-width: 0; padding: 9px 8px; }
+.horas .periodo { display: block; margin-top: 4px; color: var(--muda); font-size: 11px; line-height: 1.35; }
 .horas div + div { border-left: 1px solid var(--grade); }
 .horas div:first-child { padding-left: 0; }
 .horas b { display: block; font-size: 22px; line-height: 1.2; }
@@ -432,7 +433,7 @@ footer .emergencia { font-size: 16px; }
       <li>Sensação térmica (UTCI) da Média (ensemble) dos modelos ECMWF/IFS e NOAA/GFS, no centro de Porto Alegre (−30,08; −51,21).</li>
       <li>Nível 5: UTCI ≥ 48 °C por mais de 1 hora. Nível 4: ≥ 38 °C por mais de 2 horas. Nível 3: ≥ 34 °C por mais de 2 horas.</li>
       <li>Nível 2: UTCI ≥ 32 °C por 4 horas ou ≥ 28 °C por 7 horas. Com madrugada (0h–6h) quente, ≥ 22 °C, vale já no 1º dia; com madrugada amena, de 20 a 22 °C, a partir do 2º dia seguido de calor; com madrugada abaixo de 20 °C, o dia fica em Nível 1.</li>
-      <li>Atenuação de N3 para N2: exige no máximo 3 horas de UTCI ≥ 34 °C, pico abaixo de 36,5 °C, IBUTG abaixo de 28 °C e madrugada abaixo de 18,5 °C.</li>
+      <li>Atenuação de N3 para N2: exige no máximo 3 horas de UTCI ≥ 34 °C, pico abaixo de 36,5 °C e madrugada abaixo de 18,5 °C.</li>
       <li>Rampa: um dia em Nível 1 com UTCI máxima ≥ 30 °C sobe para Nível 2 se o dia seguinte for Nível 3 ou mais.</li>
       <li>Acúmulo: Nível 2 por mais de 3 dias seguidos vira Nível 3; Nível 3 por mais de 2 dias vira Nível 4; Nível 4 por 2 dias vira Nível 5.</li>
       <li>Rescaldo: depois de um dia em Nível 3 ou mais, um dia que cairia para Nível 1 fica em Nível 2.</li>

@@ -30,16 +30,16 @@
   // Categorias oficiais de estresse térmico da UTCI (Bröde et al., 2012).
   // São distintas dos níveis do Protocolo de Calor, cujas regras permanecem inalteradas.
   const FAIXAS = [
-    { de: -99, ate: -40, cor: "#08306b", texto: "#fff", nome: "Frio extremo" },
-    { de: -40, ate: -27, cor: "#08519c", texto: "#fff", nome: "Frio muito forte" },
-    { de: -27, ate: -13, cor: "#3182bd", texto: "#fff", nome: "Frio forte" },
-    { de: -13, ate: 0, cor: "#6baed6", texto: "#111", nome: "Frio moderado" },
-    { de: 0, ate: 9, cor: "#0d80bf", texto: "#fff", nome: "Frio leve" },
-    { de: 9, ate: 26, cor: "#74c476", texto: "#111", nome: "Sem estresse" },
-    { de: 26, ate: 32, cor: "#facc15", texto: "#111", nome: "Estresse moderado" },
-    { de: 32, ate: 38, cor: "#ea580c", texto: "#fff", nome: "Estresse forte" },
-    { de: 38, ate: 46, cor: "#dc2626", texto: "#fff", nome: "Estresse muito forte" },
-    { de: 46, ate: 99, cor: "#6b21a8", texto: "#fff", nome: "Estresse extremo" },
+    { de: -99, ate: -40, cor: "#08306b", texto: "#fff", nome: "Frio extremo", rotulo: "estresse extremo por frio" },
+    { de: -40, ate: -27, cor: "#08519c", texto: "#fff", nome: "Frio muito forte", rotulo: "estresse muito forte por frio" },
+    { de: -27, ate: -13, cor: "#3182bd", texto: "#fff", nome: "Frio forte", rotulo: "estresse forte por frio" },
+    { de: -13, ate: 0, cor: "#6baed6", texto: "#111", nome: "Frio moderado", rotulo: "estresse moderado por frio" },
+    { de: 0, ate: 9, cor: "#0d80bf", texto: "#fff", nome: "Frio leve", rotulo: "estresse leve por frio" },
+    { de: 9, ate: 26, cor: "#74c476", texto: "#111", nome: "Sem estresse", rotulo: "sem estresse térmico" },
+    { de: 26, ate: 32, cor: "#facc15", texto: "#111", nome: "Estresse moderado", rotulo: "estresse moderado por calor" },
+    { de: 32, ate: 38, cor: "#ea580c", texto: "#fff", nome: "Estresse forte", rotulo: "estresse forte por calor" },
+    { de: 38, ate: 46, cor: "#dc2626", texto: "#fff", nome: "Estresse muito forte", rotulo: "estresse muito forte por calor" },
+    { de: 46, ate: 99, cor: "#6b21a8", texto: "#fff", nome: "Estresse extremo", rotulo: "estresse extremo por calor" },
   ];
   const faixa = (u) => FAIXAS.find((f) => u >= f.de && u < f.ate) || FAIXAS[4];
   const rotuloFaixa = (f) => (f.de < -50 ? `${f.nome} (<${f.ate} °C)` : f.ate > 90 ? `${f.nome} (≥${f.de} °C)` : `${f.nome} (${f.de}–${f.ate} °C)`);
@@ -189,14 +189,35 @@
     return el("div", { class: "regua", role: "img", "aria-label": `${atual ? "Sensação térmica atual" : "Sensação térmica máxima"} de ${f0(valor)} °C, faixa ${faixa(valor).nome}` }, barra, ticks);
   }
 
+  function segmentosFaixa(d, f) {
+    const grupos = [];
+    let inicio = -1, fim = -1;
+    const fechar = () => { if (inicio >= 0) grupos.push({ inicio, fim }); inicio = fim = -1; };
+    H.sensacao.forEach((v, i) => {
+      if (!H.tempo[i].startsWith(d.data)) { fechar(); return; }
+      const dentro = v >= f.de && v < f.ate;
+      if (dentro && inicio < 0) { inicio = fim = i; }
+      else if (dentro && i === fim + 1) { fim = i; }
+      else if (dentro) { fechar(); inicio = fim = i; }
+      else { fechar(); }
+    });
+    fechar();
+    return grupos;
+  }
+
+  const intervaloFaixa = (f) => (f.de < -50 ? `<${f.ate} °C` : f.ate > 90 ? `≥${f.de} °C` : `${f.de}–${f.ate} °C`);
+  const textoPeriodos = (grupos) => grupos.map((g) => {
+    const a = H.tempo[g.inicio].slice(11, 13), b = H.tempo[g.fim].slice(11, 13);
+    return g.inicio === g.fim ? `${a}h` : `${a}h às ${b}h`;
+  }).join(" · ");
+
   function renderSensacao() {
     const d = DIAS[selecionado], iAtual = indiceHoraAtual(d.data), ehAtual = iAtual >= 0;
     const valor = ehAtual ? H.sensacao[iAtual] : d.sensacao.max;
     const hora = ehAtual ? H.tempo[iAtual].slice(11, 16) : d.sensacao.h_max;
     const fx = faixa(valor);
-    const horasDia = (limiar) => H.sensacao.reduce((total, v, i) => total + (H.tempo[i].startsWith(d.data) && v >= limiar ? 1 : 0), 0);
-    const horas = [[26, "#facc15", "Estresse moderado", horasDia(26)], [32, "#ea580c", "Estresse forte", horasDia(32)], [38, "#dc2626", "Estresse muito forte", horasDia(38)]];
-    if (horasDia(46) > 0) horas.push([46, "#6b21a8", "Estresse extremo", horasDia(46)]);
+    const grupos = FAIXAS.map((f) => ({ f, periodos: segmentosFaixa(d, f) })).filter((g) => g.periodos.length)
+      .sort((a, b) => b.f.de - a.f.de);
     trocar($("sensacao"),
       el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica atual (UTCI)" : "Sensação térmica máxima (UTCI)",
         el("small", {}, ehAtual ? "valor da hora mais recente, em Porto Alegre" : "pico previsto para o dia selecionado")),
@@ -205,10 +226,14 @@
         el("span", { class: "hora" }, `às ${hora}`)),
       ehAtual ? el("p", { class: "maximo" }, `Máxima prevista hoje: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}`) : null,
       regua(valor, ehAtual),
-      el("div", { class: "rotulo-grupo" }, "Horas previstas no dia em cada faixa de estresse"),
-      el("div", { class: "horas", "aria-label": "Horas do dia em cada faixa de estresse térmico" }, ...horas.map(([lim, cor, nome, h]) =>
-        el("div", { title: `${h} horas com sensação térmica de ${lim} °C ou mais` },
-          el("b", {}, `${h} h`), el("span", {}, el("i", { class: "ponto-faixa", style: `background:${cor}` }), `≥ ${lim} °C · ${nome}`)))),
+      el("div", { class: "rotulo-grupo" }, "Horas e períodos por faixa de estresse térmico"),
+      el("div", { class: "horas", "aria-label": "Horas e períodos em cada faixa de estresse térmico" }, ...grupos.map(({ f, periodos }) => {
+        const total = periodos.reduce((n, g) => n + g.fim - g.inicio + 1, 0), periodo = textoPeriodos(periodos);
+        return el("div", { class: "faixa-horas", title: `${total} h · ${f.rotulo} · ${periodo}` },
+          el("b", {}, `${total} h`),
+          el("span", { class: "nome-faixa" }, el("i", { class: "ponto-faixa", style: `background:${f.cor}` }), `${intervaloFaixa(f)} · ${f.rotulo}`),
+          el("small", { class: "periodo" }, periodo));
+      })),
       el("p", { class: "explica" }, `A UTCI combina a temperatura do ar (máxima de ${grau(d.temp.max)}), a radiação solar, a umidade e o vento. Os alertas também consideram a duração do calor e o acúmulo entre dias.`),
     );
   }
@@ -499,7 +524,6 @@
   // Escala do protocolo para as tabelas técnicas (frio detalhado abaixo de 12 °C)
   const corBio = (v) => (v >= 48 ? ["#6b21a8", "#fff"] : v >= 38 ? ["#dc2626", "#fff"] : v >= 34 ? ["#ea580c", "#fff"] : v >= 28 ? ["#facc15", "#111"]
     : v >= 12 ? ["#74c476", "#111"] : v >= 6 ? ["#6baed6", "#111"] : v >= 0 ? ["#3182bd", "#fff"] : ["#08519c", "#fff"]);
-  const corIbutg = (v) => (v >= 33 ? ["#6b21a8", "#fff"] : v >= 30 ? ["#dc2626", "#fff"] : v >= 28 ? ["#ea580c", "#fff"] : v >= 24 ? ["#facc15", "#111"] : ["#74c476", "#111"]);
   const pilula = (v, hora, cor) => { const [bg, fg] = cor(v); return el("span", { class: "pilula", style: `background:${bg};color:${fg}` }, `${f1(v)} °C (${hora})`); };
   const minMax = (x, cor) => el("span", {}, pilula(x.min, x.h_min, cor), " – ", pilula(x.max, x.h_max, cor));
   let modeloTec = "gfs";
@@ -511,7 +535,6 @@
       ["Estabilidade", (d, x) => el("span", { class: "pilula", style: `background:${x.estabilidade.bg};color:${x.estabilidade.fg}` }, x.estabilidade.texto)],
       ["Sensação térmica (UTCI)", (d, x) => minMax(x.utci, corBio)],
       ["Temperatura do ar", (d, x) => minMax(x.t2m, corBio)],
-      ["IBUTG (ocupacional)", (d, x) => minMax(x.ibutg, corIbutg)],
       ["Chuva NOAA/GFS, centro / máx. vizinhança", (d) => `${f1(d.modelos.gfs.chuva_mm)} / ${f1(d.modelos.gfs.chuva_max_grade_mm)} mm`],
       ["NMEP NOAA/GFS ≥10 / ≥25 / ≥50 mm", (d) => `${pct(d.modelos.gfs.nmep_10)} / ${pct(d.modelos.gfs.nmep_25)} / ${pct(d.modelos.gfs.nmep_50)}`],
       ["Umidade relativa", (d, x) => `${f0(x.ur_min)}–${f0(x.ur_max)}%`],
@@ -523,7 +546,6 @@
       ["Janela crítica", (d) => d.janela],
       ["Mínima da madrugada (0h–6h)", (d) => `${f1(d.tmin_noite)} °C`],
       ["Horas com UTCI ≥28 / ≥32 / ≥34 / ≥38", (d) => `${d.horas_utci_28} / ${d.horas_utci_32} / ${d.horas_utci_34} / ${d.horas_utci_38} h`],
-      ["Pico do IBUTG · média (ensemble)", (d) => `${f1(d.pico_ibutg)} °C`],
       ["Taxa metabólica admissível (NR-15)", (d) => `${f0(d.m_adm)} W · ${d.classe_madm}`],
     ];
     trocar($("tabela-tec"), el("table", {}, el("thead", {}, el("tr", {}, el("th", { scope: "col" }, ""), ...DIAS.map((d) => el("th", { scope: "col" }, `${d.dia_semana} ${ddmm(d.data)}`)))),
