@@ -217,7 +217,7 @@
     const hora = ehAtual ? H.tempo[iAtual].slice(11, 16) : d.sensacao.h_max;
     const fx = faixa(valor);
     const grupos = FAIXAS.map((f) => ({ f, periodos: segmentosFaixa(d, f) })).filter((g) => g.periodos.length)
-      .sort((a, b) => b.f.de - a.f.de);
+      .sort((a, b) => a.f.de - b.f.de);
     trocar($("sensacao"),
       el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica atual (UTCI)" : "Sensação térmica máxima (UTCI)",
         el("small", {}, ehAtual ? "valor da hora mais recente, em Porto Alegre" : "pico previsto para o dia selecionado")),
@@ -261,18 +261,20 @@
         el("p", { class: "indisponivel" }, "Índice UV indisponível nesta atualização. Consulte novamente na próxima atualização da previsão."));
       return;
     }
-    const maximo = apresentarUV(info.max), fx = nivelUV(info.max), iAtual = indiceHoraAtual(d.data);
-    const uvAgora = iAtual >= 0 && H.uv ? apresentarUV(H.uv[iAtual]) : null;
-    const fxAgora = uvAgora == null ? null : nivelUV(H.uv[iAtual]);
+    const maximo = apresentarUV(info.max), iAtual = indiceHoraAtual(d.data);
+    const uvAtual = iAtual >= 0 && H.uv ? apresentarUV(H.uv[iAtual]) : null;
+    const ehAtual = uvAtual != null, valor = ehAtual ? uvAtual : maximo;
+    const fx = ehAtual ? nivelUV(H.uv[iAtual]) : nivelUV(info.max);
+    const hora = ehAtual ? H.tempo[iAtual].slice(11, 16) : info.h_max;
     trocar(alvo,
-      el("h2", { class: "rotulo" }, "Índice ultravioleta (UV)", el("small", {}, "máximo previsto no dia")),
-      el("div", { class: "valor-uv" }, el("strong", { "aria-label": `Índice UV máximo ${maximo}`, style: `color:${fx.cor_fg}` }, String(maximo)),
+      el("h2", { class: "rotulo" }, "Índice ultravioleta (UV)", el("small", {}, ehAtual ? "valor da hora mais recente" : "máximo previsto no dia")),
+      el("div", { class: "valor-uv" }, el("strong", { "aria-label": `${ehAtual ? "Índice UV atual" : "Índice UV máximo"} ${valor}`, style: `color:${fx.cor_fg}` }, String(valor)),
         el("span", { class: "pilula-faixa", style: `background:${fx.cor_bg};color:${fx.cor_fg}` }, fx.nome),
-        el("span", { class: "hora" }, `às ${info.h_max}`)),
-      el("div", { class: "escala-uv", role: "img", "aria-label": `Escala UV: ${fx.nome}, valor ${maximo}` }, ...niveisUV.map((f) =>
+        el("span", { class: "hora" }, `às ${hora}`)),
+      ehAtual ? el("p", { class: "maximo-uv" }, `Máxima prevista hoje: UV ${maximo} · ${nivelUV(info.max).nome} às ${info.h_max}`) : null,
+      el("div", { class: "escala-uv", role: "img", "aria-label": `Escala UV: ${fx.nome}, valor ${valor}` }, ...niveisUV.map((f) =>
         el("span", { style: `--cor-uv:${f.cor_fg}`, title: f.nome, "aria-current": f.nome === fx.nome ? "true" : null }, `${f.min}${f.max == null ? "+" : `–${f.max}`}`))),
-      uvAgora != null && fxAgora ? el("p", { class: "agora-uv" }, `Às ${H.tempo[iAtual].slice(11, 16)}: UV ${uvAgora} · ${fxAgora.nome} (média horária)`)
-        : info.max_ceu_limpo != null ? el("p", { class: "agora-uv" }, `Céu limpo: UV máx. ${apresentarUV(info.max_ceu_limpo)}`) : null,
+      !ehAtual && info.max_ceu_limpo != null ? el("p", { class: "agora-uv" }, `Céu limpo: UV máx. ${apresentarUV(info.max_ceu_limpo)}`) : null,
       el("p", { class: "cuidado-uv" }, fx.cuidado),
       el("p", { class: "explica" }, "Referência: ", el("a", { href: "https://www.who.int/publications/i/item/9241590076", target: "_blank", rel: "noopener" }, "Global Solar UV Index — OMS")),
     );
@@ -450,8 +452,20 @@
         H.tempo.forEach((t, i) => { if (t.startsWith(d.data) && (im < 0 || U[i] > U[im])) im = i; });
         if (im < 0) return;
         const px = x(meio(im)), py = y(U[im]);
-        plot.append("circle").attr("cx", px).attr("cy", py).attr("r", 4.5).style("fill", CORES_MODELOS[mod]).style("stroke", "var(--superficie)").style("stroke-width", 2);
+        plot.append("circle").attr("class", "pico-utci").attr("cx", px).attr("cy", py).attr("r", 4.5).style("fill", CORES_MODELOS[mod]).style("stroke", "var(--superficie)").style("stroke-width", 2);
         texto(plot, px, py - 12 - imodelo * 12, `${f0(U[im])} °C`, { ancora: "middle", cor: CORES_MODELOS[mod], tam: ativos.length > 1 ? 10.5 : 11.5, peso: 700 });
+      });
+    });
+    if (c.temp && c.picos) ativos.forEach((mod, imodelo) => {
+      const TA = SERIE.temp[mod];
+      DIAS.forEach((d) => {
+        let im = -1;
+        H.tempo.forEach((t, i) => { if (t.startsWith(d.data) && (im < 0 || TA[i] > TA[im])) im = i; });
+        if (im < 0) return;
+        const px = x(meio(im)), py = y(TA[im]);
+        plot.append("path").attr("class", "pico-temp").attr("d", `M${px},${py - 5}L${px + 5},${py}L${px},${py + 5}L${px - 5},${py}Z`)
+          .style("fill", CORES_TEMP[mod]).style("stroke", "var(--superficie)").style("stroke-width", 1.5);
+        texto(plot, px, py + 17 + imodelo * 10, `${f0(TA[im])} °C`, { ancora: "middle", cor: CORES_TEMP[mod], tam: ativos.length > 1 ? 10 : 11, peso: 650 });
       });
     });
     linhaAgora(svg, x, m, h);
