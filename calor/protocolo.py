@@ -7,7 +7,7 @@ Mesmos gatilhos do código original, com atenuação noturna estendida para o N�
 1b. Persistência do Nível 2: com madrugada amena (mínima entre 20 e 22 °C), o N2 só vale a partir do
    2º dia seguido de calor; com madrugada quente (≥ 22 °C), vale já no 1º dia.
 1c. Atenuação de Nível 3 para Nível 2: calor forte pontual (UTCI ≥ 34 °C por no máximo 3h, pico < 36,5 °C
-   e IBUTG < 28,0 °C) é rebaixado para Atenção (N2) caso a madrugada registre resfriamento profundo (mínima < 18,5 °C).
+   e recuperação noturna profunda (mínima < 18,5 °C) pode ser rebaixado para Atenção (N2).
 2. Rampa antecipatória: dia em Nível 1 vira Nível 2 se o dia seguinte for Nível 3+ e a UTCI máxima
    do dia for ≥ 30 °C.
 3. Acúmulo: N2 por mais de 3 dias seguidos → N3; N3 por mais de 2 dias → N4; N4 por 2 dias ou mais → N5.
@@ -120,11 +120,10 @@ def avaliar_dia(dia: pd.DataFrame) -> dict:
         nivel, gatilho = 4, f"UTCI ≥38°C por {h_n4}h (>2h)"
         motivo = f"Sensação térmica de 38 °C ou mais por {h_n4} horas."
     elif h_n3 > 2:
-        # Atenuação de N3 para N2 sob salvaguardas fisiológicas e ocupacionais
+        # Atenuação de N3 para N2 sob salvaguardas fisiológicas, sem participação do IBUTG
         n3_marginal = (h_n3 <= 3) and (pico_utci < 36.5)
-        seguranca_ocupacional = pico_ibutg < 28.0
 
-        if recuperacao_profunda and n3_marginal and seguranca_ocupacional:
+        if recuperacao_profunda and n3_marginal:
             nivel = 2
             tipo_n2 = "atenuado_de_n3"
             gatilho = f"N3 atenuado p/ N2: Madrugada fria ({tmin_noite:.1f}°C <18.5°) compensa pico breve"
