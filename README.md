@@ -12,7 +12,7 @@ pelo GitHub Pages. Uma automação (GitHub Actions) refaz a previsão a cada 3 h
 - **Hora a hora:** sensação térmica (UTCI) e temperatura, com as faixas do protocolo e a diferença
   entre os modelos; chuva por hora.
 - **Detalhes técnicos:** ECMWF × GFS, UTCI, IBUTG (escala ocupacional), chuva,
-  probabilidade de chuva forte na vizinhança (NMEP), vento, gatilho e taxa metabólica admissível (NR-15).
+  probabilidade de chuva forte na vizinhança (NMEP), vento e gatilho.
 
 ## Página
 

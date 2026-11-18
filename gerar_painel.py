@@ -75,15 +75,6 @@ def resumo_modelo(dia: pd.DataFrame, nmep: dict | None) -> dict:
     }
 
 
-def condicao_consenso(ec: dict, gf: dict) -> tuple[int, str]:
-    """Ícone e texto do dia: se os modelos divergem, vale o mais severo, com 'Possível' quando for chuva."""
-    if ec["codigo"] == gf["codigo"]:
-        return ec["codigo"], ec["condicao"]
-    pior = max((ec["codigo"], gf["codigo"]), key=lambda c: protocolo.ORDEM_CODIGO[c])
-    texto = protocolo.DESCRICAO_CODIGO[pior]
-    return pior, (f"Possível {texto.lower()}" if pior in (51, 63, 95) else texto)
-
-
 def carimbar_versao(versao: str) -> None:
     """Troca ?v=... nos endereços de app.js, dados/previsao.js e lib/d3.min.js do index.html."""
     pagina = AQUI / "docs" / "index.html"
@@ -129,7 +120,7 @@ def main() -> None:
     for d, diag in zip(dias, diagnosticos):
         dia_ec, dia_gf, dia_m = ec[ec["date"] == d], gf[gf["date"] == d], mme[mme["date"] == d]
         r_ec, r_gf = resumo_modelo(dia_ec, nmep["ecmwf"].get(d)), resumo_modelo(dia_gf, nmep["gfs"].get(d))
-        codigo, condicao = condicao_consenso(r_ec, r_gf)
+        codigo, condicao = r_gf["codigo"], r_gf["condicao"]
         seta, direcao = protocolo.vento_predominante(pd.concat([dia_ec["wind_kmh"], dia_gf["wind_kmh"]]),
                                                      pd.concat([dia_ec["wind_dir"], dia_gf["wind_dir"]]))
         nivel = diag["nivel"]
@@ -139,13 +130,13 @@ def main() -> None:
             "motivo": diag["motivo"], "gatilho": diag["gatilho"], "janela": diag["janela"],
             "janela_ini": diag["janela_ini"], "janela_fim": diag["janela_fim"],
             "tmin_noite": diag["tmin_noite"], "noite_quente": diag["noite_quente"], "noite_fresca": diag["recuperacao_plena"],
-            "pico_ibutg": diag["pico_ibutg"], "m_adm": diag["m_adm"], "classe_madm": protocolo.CLASSE_MADM[nivel],
+            "pico_ibutg": diag["pico_ibutg"],
             "horas_utci_28": diag["horas_n2"], "horas_utci_32": diag["horas_32"], "horas_utci_34": diag["horas_n3"],
             "horas_utci_38": diag["horas_n4"], "horas_utci_48": diag["horas_n5"],
             "temp": extremos(dia_m, "T2M_MME"), "sensacao": extremos(dia_m, "UTCI_MME"),
             "uv": resumo_uv(dia_gf),
             "codigo": codigo, "condicao": condicao,
-            "tempo": protocolo.estabilidade_publico(r_ec["estabilidade"], r_gf["estabilidade"]),
+            "tempo": r_gf["estabilidade"]["texto"],
             "vento_max": max(r_ec["vento_max"], r_gf["vento_max"]), "rajada_max": max(r_ec["rajada_max"], r_gf["rajada_max"]),
             "vento_dir": direcao, "vento_seta": seta,
             "modelos": {"ecmwf": r_ec, "gfs": r_gf},
@@ -160,6 +151,7 @@ def main() -> None:
         "chuva_ecmwf": ec["precip_center"].to_numpy()[f], "chuva_gfs": gf["precip_center"].to_numpy()[f],
         "umidade": ((ec["rh2m"] + gf["rh2m"]) / 2.0).to_numpy()[f],
         "vento": ((ec["wind_kmh"] + gf["wind_kmh"]) / 2.0).to_numpy()[f],
+        "rajadas": ((ec["wind_gust_kmh"] + gf["wind_gust_kmh"]) / 2.0).to_numpy()[f],
         "ibutg": mme["WBGT_MME"].to_numpy()[f],
         "uv": gf["uv_index"].to_numpy()[f], "uv_ceu_limpo": gf["uv_index_clear_sky"].to_numpy()[f],
     }
@@ -182,7 +174,7 @@ def main() -> None:
         print(f"  (anterior) {x['data']}  N{x['nivel']}  | {x['gatilho']}")
     for x in saida_dias:
         print(f"  {x['dia_semana']:<8} {x['data']}  N{x['nivel']} {x['nome']:<11} Tmáx {x['temp']['max']:4.1f}  "
-              f"UTCI máx {x['sensacao']['max']:4.1f}  chuva EC {x['modelos']['ecmwf']['chuva_mm']:4.1f} / NOAA/GFS {x['modelos']['gfs']['chuva_mm']:4.1f} mm  | {x['gatilho']}")
+              f"UTCI máx {x['sensacao']['max']:4.1f}  chuva NOAA/GFS {x['modelos']['gfs']['chuva_mm']:4.1f} mm  | {x['gatilho']}")
 
 
 if __name__ == "__main__":
