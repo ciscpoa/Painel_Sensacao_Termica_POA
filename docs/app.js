@@ -215,10 +215,12 @@
     return grupos;
   }
 
-  const textoPeriodos = (grupos) => grupos.map((g) => {
+  const textoPeriodo = (g) => {
     const a = H.tempo[g.inicio].slice(11, 13), b = H.tempo[g.fim].slice(11, 13);
     return g.inicio === g.fim ? `${a}h` : `${a}h às ${b}h`;
-  }).join(" · ");
+  };
+  const textoPeriodos = (grupos) => grupos.map(textoPeriodo).join(" · ");
+  const listaPeriodos = (grupos) => el("ul", { class: "lista-periodos" }, ...grupos.map((g) => el("li", {}, textoPeriodo(g))));
 
   function renderSensacao() {
     const d = DIAS[selecionado], iAtual = indiceHoraAtual(d.data), ehAtual = iAtual >= 0;
@@ -241,7 +243,7 @@
         const rotulo = f.de === 9 ? "Sem estresse térmico" : `Estresse térmico ${f.rotulo.replace(/^estresse\s+/, "")}`;
         return el("div", { class: "faixa-horas", style: `background:${f.cor};color:${textoFaixa(f)}`, title: `${total} h · ${f.rotulo} · ${periodo}` },
           el("div", { class: "resumo-faixa" }, el("b", {}, `${total} h`), el("span", { class: "texto-resumo" }, " do dia")),
-          el("small", { class: "periodo" }, periodo),
+          listaPeriodos(periodos),
           el("span", { class: "rotulo-estresse" }, rotulo));
       })),
       el("p", { class: "explica" }, `A UTCI combina a temperatura do ar (máxima de ${grau(d.temp.max)}), a radiação solar, a umidade e o vento. Os alertas também consideram a duração do calor e o acúmulo entre dias.`),
@@ -415,7 +417,7 @@
     controlesCalor();
     const c = estadoCalor, ativos = Object.keys(c.modelos).filter((k) => c.modelos[k]);
     const div = $("graf-calor"), w = largura(div), h = Math.round(Math.max(300, Math.min(440, w * 0.36)));
-    const m = { t: 34, r: w < 640 ? 12 : 150, b: 26, l: 48 };
+    const m = { t: 34, r: w < 640 ? 12 : 28, b: 26, l: 48 };
     div.replaceChildren();
     const nomesAtivos = ativos.map((k) => MODELOS[k]).join(", ") || "nenhum modelo selecionado";
     const svg = d3.select(div).append("svg").attr("width", w).attr("height", h).attr("role", "img")
@@ -427,12 +429,13 @@
     const hi = Math.ceil(Math.max(d3.max(maxM), d3.max(H.temp_ecmwf), d3.max(H.temp_gfs), 30) + 3);
     const y = d3.scaleLinear().domain([lo, hi]).nice(6).range([h - m.b, m.t]);
     const [y0, y1] = y.domain();
+    trocar($("faixas-calor"), ...FAIXAS.filter((f) => f.ate > y0 && f.de < y1).map((f) =>
+      el("span", {}, el("i", { style: `background:${f.cor}` }), f.nome)));
     const fundo = svg.append("g");
     FAIXAS.forEach((f) => {
       const a = Math.max(f.de, y0), b = Math.min(f.ate, y1);
       if (b <= a) return;
       fundo.append("rect").attr("x", m.l).attr("width", w - m.l - m.r).attr("y", y(b)).attr("height", y(a) - y(b)).style("fill", f.cor).style("fill-opacity", "var(--faixa-op)");
-      if (m.r > 40 && y(a) - y(b) > 12) texto(fundo, w - m.r + 6, (y(a) + y(b)) / 2, f.de < -50 ? `${f.nome} <${f.ate} °C` : `${f.nome} ≥${f.de} °C`, { cor: "var(--tinta2)", tam: 11 });
     });
     eixoDias(svg, x, m, h);
     const eixo = svg.append("g").attr("class", "eixo");
