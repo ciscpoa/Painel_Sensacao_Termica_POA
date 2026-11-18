@@ -37,7 +37,7 @@
     { de: 0, ate: 9, cor: "#0d80bf", texto: "#fff", nome: "Frio leve", rotulo: "estresse leve por frio" },
     { de: 9, ate: 26, cor: "#74c476", texto: "#111", nome: "Sem estresse", rotulo: "sem estresse térmico" },
     { de: 26, ate: 32, cor: "#facc15", texto: "#111", nome: "Estresse moderado", rotulo: "estresse moderado por calor" },
-    { de: 32, ate: 38, cor: "#ea580c", texto: "#fff", nome: "Estresse forte", rotulo: "estresse forte por calor" },
+    { de: 32, ate: 38, cor: "#ea580c", texto: "#fff", nome: "Estresse forte por calor", rotulo: "estresse forte por calor" },
     { de: 38, ate: 46, cor: "#dc2626", texto: "#fff", nome: "Estresse muito forte", rotulo: "estresse muito forte por calor" },
     { de: 46, ate: 99, cor: "#6b21a8", texto: "#fff", nome: "Estresse extremo", rotulo: "estresse extremo por calor" },
   ];
