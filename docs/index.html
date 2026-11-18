@@ -146,9 +146,14 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .alerta ul { margin: 0; padding-left: 20px; }
 .alerta li { margin: 4px 0; }
 .alerta .rodape-alerta { margin-top: auto; padding-top: 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.alerta .compartilhar-grupo { display: flex; flex-wrap: wrap; gap: 8px; }
+.alerta .compartilhar-grupo button { flex: 1 1 150px; }
 .alerta .compartilhar { min-height: 44px; border: 1px solid currentColor; background: rgba(255,255,255,.22); color: inherit; border-radius: 999px;
   padding: 9px 16px; font: 650 14px/1.2 var(--f-corpo); cursor: pointer; transition: background-color 150ms ease-out, transform 150ms ease-out; }
-.alerta .compartilhar:hover { background: rgba(255, 255, 255, 0.65); transform: translateY(-1px); }
+.alerta .compartilhar:hover, .alerta .baixar-png:hover { background: rgba(255, 255, 255, 0.65); transform: translateY(-1px); }
+.alerta .baixar-png { min-height: 44px; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 999px;
+  padding: 9px 14px; font: 600 14px/1.2 var(--f-corpo); cursor: pointer; transition: background-color 150ms ease-out, transform 150ms ease-out; }
+.alerta .compartilhar:disabled, .alerta .baixar-png:disabled { cursor: wait; opacity: 0.65; transform: none; }
 .alerta .quando { margin-left: auto; font-size: 13px; font-weight: 650; text-align: right; }
 
 .sensacao { order: 2; }
@@ -217,21 +222,21 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 }
 @media (min-width: 1280px) {
   .hoje { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .hoje .alerta { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: minmax(170px, 0.65fr) minmax(0, 1.35fr) minmax(0, 1fr); align-items: center; gap: 8px 28px; }
+  .hoje .alerta { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.8fr); align-items: center; gap: 12px 28px; }
   .hoje .sensacao { grid-column: 1; grid-row: 2; }
   .hoje .tempo-dia { grid-column: 2; grid-row: 2; }
   .hoje .uv { grid-column: 3; grid-row: 2; }
   .alerta .nivel { grid-column: 1; grid-row: 1; margin: 0; }
-  .alerta .nivel .num { min-height: 42px; padding: 7px 22px; font-size: 16px; font-weight: 800; }
+  .alerta .nivel .num { min-height: 44px; padding: 8px 24px; font-size: 17px; font-weight: 800; }
   .alerta .protocolo { grid-column: 1; grid-row: 2; font-size: 13px; text-align: center; }
-  .alerta .nome { grid-column: 1; grid-row: 3 / 5; font-size: clamp(44px, 3vw + 18px, 60px); font-weight: 760; line-height: 1.05; text-align: center; }
-  .alerta .motivo { grid-column: 2; grid-row: 1 / 4; font-size: clamp(19px, 1.1vw + 15px, 24px); font-weight: 650; line-height: 1.35; }
-  .alerta .janela { grid-column: 2; grid-row: 4; display: inline-flex; align-items: center; border: 0; border-radius: 10px; background: rgba(255,255,255,.45); padding: 9px 14px; font-size: 18px; font-weight: 750; line-height: 1.3; }
-  .alerta h3 { grid-column: 3; grid-row: 1; margin-top: 0; font-size: 18px; }
-  .alerta ul { grid-column: 3; grid-row: 2 / 5; font-size: 16px; }
-  .alerta .rodape-alerta { grid-column: 1 / -1; grid-row: 6; padding-top: 14px; border-top: 0; }
-  .alerta .compartilhar { order: 2; margin-left: auto; font-size: 15px; padding: 10px 18px; }
-  .alerta .quando { order: 1; margin-left: 0; font-size: 14px; }
+  .alerta .nome { grid-column: 1; grid-row: 3; font-size: clamp(48px, 3.5vw + 20px, 68px); font-weight: 780; line-height: 1.05; text-align: center; }
+  .alerta .motivo { grid-column: 1; grid-row: 4; font-size: clamp(18px, 1.1vw + 15px, 23px); font-weight: 650; line-height: 1.35; text-align: center; justify-self: center; }
+  .alerta .janela { grid-column: 1; grid-row: 5; display: inline-flex; align-items: center; justify-self: center; border: 0; border-radius: 10px; background: rgba(255,255,255,.45); padding: 9px 14px; font-size: 18px; font-weight: 750; line-height: 1.3; }
+  .alerta h3 { grid-column: 2; grid-row: 1; margin-top: 0; font-size: 18px; }
+  .alerta ul { grid-column: 2; grid-row: 2 / 5; font-size: 16px; }
+  .alerta .rodape-alerta { display: contents; }
+  .alerta .compartilhar-grupo { grid-column: 2; grid-row: 6; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  .alerta .quando { grid-column: 1; grid-row: 6; justify-self: center; margin-left: 0; font-size: 14px; text-align: center; }
   .tempo-dia .numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -323,12 +328,12 @@ details.tecnico code { font-size: 14px; overflow-wrap: anywhere; }
 #tooltip .l + .l { margin-top: 4px; }
 #tooltip .l strong { flex: none; white-space: nowrap; font-size: 14px; font-variant-numeric: tabular-nums; }
 #tooltip .l span { flex: 1; min-width: 0; color: var(--tinta2); }
-footer { background: #082f3d; color: #e5f4f3; margin-top: 8px; border-top: 3px solid var(--laranja); }
+footer { background: #eef4f5; color: #17323c; margin-top: 8px; border-top: 3px solid var(--laranja); }
 footer .largura { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: center; padding-block: 28px 34px; }
-footer img { width: clamp(104px, 10vw, 140px); height: auto; flex: none; }
+footer .logos-rodape { width: min(100%, 760px); height: auto; flex: 0 1 720px; background: transparent; padding: 0; }
 footer .creditos { flex: 1 1 340px; font-size: 14px; line-height: 1.6; }
 footer .creditos p { margin: 0 0 10px; max-width: 75ch; }
-footer a { color: #f8f8f8; }
+footer a { color: #00666d; }
 footer .emergencia { font-size: 16px; }
 :focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; }
 ::selection { background: var(--marca); color: #f4ffff; }
@@ -358,10 +363,6 @@ footer .emergencia { font-size: 16px; }
 </head>
 <body>
 <a class="pular" href="#conteudo">Pular para o conteúdo</a>
-<div class="faixa-inst">
-  <div class="largura"><img src="img/instituicoes.jpg" width="1413" height="234"
-    alt="Diretoria de Vigilância em Saúde (SMS/PMPA), Sistema Único de Saúde e Prefeitura de Porto Alegre – Secretaria de Saúde"></div>
-</div>
 <header class="cabecalho">
   <div class="largura">
     <img class="marca" src="img/cisc-marca.png" width="285" height="289" alt="CISC">
@@ -468,7 +469,7 @@ footer .emergencia { font-size: 16px; }
 
 <footer>
   <div class="largura">
-    <img src="img/cisc-logo.png" width="350" height="420" alt="CISC – Centro de Informação em Saúde e Clima">
+    <img class="logos-rodape" src="img/dvs-cisc.png" width="3972" height="453" alt="CISC, Diretoria de Vigilância em Saúde, Sistema Único de Saúde e Prefeitura de Porto Alegre – Secretaria de Saúde">
     <div class="creditos">
       <p><strong>Painel de Calor de Porto Alegre</strong>, desenvolvido pelo CISC – Centro de Informação em Saúde e Clima.</p>
       <p>Previsão: modelos ECMWF/IFS e NOAA/GFS, via <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0), atualizada automaticamente a cada 3 horas. Previsões têm incerteza, que aumenta nos dias mais distantes.</p>

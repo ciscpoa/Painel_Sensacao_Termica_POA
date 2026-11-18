@@ -16,6 +16,7 @@
   // Horários são "hora de Porto Alegre" e ficam como UTC no navegador, para não depender do fuso de quem vê.
   const dataDe = (s) => new Date(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10), +(s.slice(11, 13) || 0), +(s.slice(14, 16) || 0)));
   const ddmm = (s) => `${s.slice(8, 10)}/${s.slice(5, 7)}`;
+  const ddmmaaaa = (s) => `${ddmm(s)}/${s.slice(0, 4)}`;
   function agoraPOA() {
     const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit",
       day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).map((x) => [x.type, x.value]));
@@ -162,13 +163,106 @@
   }
 
   // ------------------------------------------------------------------ compartilhar
-  function compartilhar(d) {
-    const url = location.href.split("#")[0].split("?")[0];
-    const quando = rotuloDia(d) === "Hoje" ? "Hoje" : `${rotuloDia(d)} (${ddmm(d.data)})`;
-    const texto = `Painel de Calor de Porto Alegre — ${quando}: Nível ${d.nivel}, ${d.nome}. Sensação térmica de até ${f0(d.sensacao.max)} °C.`
-      + (d.janela_ini != null ? ` Horário mais crítico: ${d.janela_ini}h às ${d.janela_fim}h.` : "") + ` ${d.publico[0]}`;
-    if (navigator.share) navigator.share({ title: "Painel de Calor de Porto Alegre", text: texto, url }).catch(() => {});
-    else window.open(`https://wa.me/?text=${encodeURIComponent(`${texto} ${url}`)}`, "_blank", "noopener");
+  const URL_PAINEL = "https://ciscpoa.github.io/protocolo_de_calor_Porto_Alegre/";
+  const textoCompartilhamento = (d) => `${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Nível ${d.nivel}, ${d.nome}. `
+    + `UTCI máxima ${grau(d.sensacao.max)}. ${d.motivo} Acesse o painel: ${URL_PAINEL}`;
+
+  function desenharTexto(ctx, texto, x, y, largura, alturaLinha, maxLinhas = 3) {
+    let linha = "", linhas = 0;
+    for (const palavra of texto.split(" ")) {
+      const teste = linha ? `${linha} ${palavra}` : palavra;
+      if (ctx.measureText(teste).width > largura && linha) {
+        linhas += 1;
+        if (linhas >= maxLinhas) { ctx.fillText(`${linha}…`, x, y); return y + alturaLinha; }
+        ctx.fillText(linha, x, y); y += alturaLinha; linha = palavra;
+      } else { linha = teste; }
+    }
+    if (linha) { ctx.fillText(linha, x, y); y += alturaLinha; }
+    return y;
+  }
+
+  function caixa(ctx, x, y, w, h, r = 16) {
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h);
+    ctx.fill();
+  }
+
+  function criarImagemAlerta(d) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1200; canvas.height = 630;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = d.cor_bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = d.cor_fg;
+    ctx.font = '700 24px "Public Sans", sans-serif';
+    ctx.fillText("PAINEL DE CALOR DE PORTO ALEGRE", 60, 58);
+    ctx.textAlign = "right";
+    ctx.font = '500 24px "Public Sans", sans-serif';
+    ctx.fillText(`${rotuloDia(d)}, ${ddmmaaaa(d.data)}`, 1140, 58);
+    ctx.textAlign = "left";
+
+    const nivel = `NÍVEL ${d.nivel}`;
+    ctx.font = '800 26px "Public Sans", sans-serif';
+    caixa(ctx, 50, 80, ctx.measureText(nivel).width + 48, 58, 29);
+    ctx.fillStyle = d.cor_bg; ctx.fillText(nivel, 74, 119);
+
+    ctx.fillStyle = d.cor_fg; ctx.font = '800 64px "IBM Plex Sans", sans-serif';
+    ctx.fillText(d.nome, 50, 210);
+    ctx.font = '500 30px "Public Sans", sans-serif';
+    let y = desenharTexto(ctx, d.motivo, 60, 260, 1080, 38, 2);
+
+    if (d.janela_ini != null) {
+      ctx.fillStyle = "rgba(255,255,255,.45)"; caixa(ctx, 50, y + 8, 1100, 66, 16);
+      ctx.fillStyle = d.cor_fg; ctx.font = '700 30px "Public Sans", sans-serif';
+      ctx.fillText(`Horário mais crítico: ${d.janela_ini}h às ${d.janela_fim}h`, 76, y + 51);
+      y += 92;
+    } else { y += 24; }
+
+    ctx.fillStyle = d.cor_fg; ctx.font = '650 27px "Public Sans", sans-serif';
+    ctx.fillText(`UTCI máxima: ${grau(d.sensacao.max)}`, 60, y + 22);
+    if (d.uv && apresentarUV(d.uv.max) != null) ctx.fillText(`UV máx.: ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome}`, 650, y + 22);
+
+    ctx.font = '700 25px "Public Sans", sans-serif';
+    ctx.fillText(d.nivel > 1 ? "O que fazer" : "Recomendações", 60, y + 76);
+    ctx.font = '400 24px "Public Sans", sans-serif';
+    y += 116;
+    d.publico.slice(0, 2).forEach((texto) => { y = desenharTexto(ctx, `• ${texto}`, 60, y, 1080, 31, 2) + 8; });
+    ctx.fillStyle = d.cor_fg; ctx.font = '500 19px "Public Sans", sans-serif';
+    ctx.textAlign = "right"; ctx.fillText("ciscpoa.github.io/protocolo_de_calor_Porto_Alegre", 1140, 606);
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  }
+
+  async function compartilhar(d) {
+    const botao = document.querySelector(".compartilhar");
+    botao.disabled = true; botao.textContent = "Gerando imagem…";
+    try {
+      const blob = await criarImagemAlerta(d);
+      const arquivo = new File([blob], `alerta-calor-${d.data}.png`, { type: "image/png" });
+      const texto = textoCompartilhamento(d);
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        await navigator.share({ title: "Painel de Calor de Porto Alegre", text: texto, files: [arquivo] });
+      } else if (navigator.share) {
+        await navigator.share({ title: "Painel de Calor de Porto Alegre", text: texto });
+      } else {
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
+      }
+    } catch (erro) {
+      if (erro.name !== "AbortError") window.open(`https://wa.me/?text=${encodeURIComponent(textoCompartilhamento(d))}`, "_blank", "noopener");
+    } finally {
+      botao.disabled = false; botao.textContent = "Compartilhar alerta";
+    }
+  }
+
+  async function baixarImagemAlerta(d) {
+    const botao = document.querySelector(".baixar-png");
+    botao.disabled = true; botao.textContent = "Gerando…";
+    try {
+      const blob = await criarImagemAlerta(d), url = window.URL.createObjectURL(blob);
+      const a = el("a", { href: url, download: `alerta-calor-${d.data}.png` });
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } finally {
+      botao.disabled = false; botao.textContent = "Baixar PNG";
+    }
   }
 
   // ------------------------------------------------------------------ dia escolhido: alerta, sensação e tempo
@@ -184,8 +278,10 @@
       el("h3", {}, d.nivel > 1 ? "O que fazer" : "Recomendações"),
       el("ul", {}, ...d.publico.map((t) => el("li", {}, t))),
       el("div", { class: "rodape-alerta" },
-        el("button", { class: "compartilhar", type: "button", onclick: () => compartilhar(d) }, "Compartilhar este alerta"),
-        el("span", { class: "quando" }, `${rotuloDia(d)}, ${ddmm(d.data)}`)),
+        el("div", { class: "compartilhar-grupo" },
+          el("button", { class: "compartilhar", type: "button", style: `background:${d.cor_fg};color:${d.cor_bg};border:1px solid ${d.cor_fg}`, onclick: () => compartilhar(d) }, "Compartilhar alerta"),
+          el("button", { class: "baixar-png", type: "button", onclick: () => baixarImagemAlerta(d) }, "Baixar PNG")),
+        el("span", { class: "quando" }, `${rotuloDia(d)}, ${ddmmaaaa(d.data)}`)),
     );
   }
 
