@@ -35,11 +35,11 @@
     { de: -27, ate: -13, cor: "#3182bd", texto: "#fff", nome: "Frio forte", rotulo: "estresse forte por frio" },
     { de: -13, ate: 0, cor: "#6baed6", texto: "#111", nome: "Frio moderado", rotulo: "estresse moderado por frio" },
     { de: 0, ate: 9, cor: "#0d80bf", texto: "#fff", nome: "Frio leve", rotulo: "estresse leve por frio" },
-    { de: 9, ate: 26, cor: "#74c476", texto: "#111", nome: "Sem estresse", rotulo: "sem estresse térmico" },
-    { de: 26, ate: 32, cor: "#facc15", texto: "#111", nome: "Estresse moderado", rotulo: "estresse moderado por calor" },
+    { de: 9, ate: 26, cor: "#74c476", texto: "#111", nome: "Sem estresse térmico", rotulo: "sem estresse térmico" },
+    { de: 26, ate: 32, cor: "#facc15", texto: "#111", nome: "Estresse moderado por calor", rotulo: "estresse moderado por calor" },
     { de: 32, ate: 38, cor: "#ea580c", texto: "#fff", nome: "Estresse forte por calor", rotulo: "estresse forte por calor" },
-    { de: 38, ate: 46, cor: "#dc2626", texto: "#fff", nome: "Estresse muito forte", rotulo: "estresse muito forte por calor" },
-    { de: 46, ate: 99, cor: "#6b21a8", texto: "#fff", nome: "Estresse extremo", rotulo: "estresse extremo por calor" },
+    { de: 38, ate: 46, cor: "#dc2626", texto: "#fff", nome: "Estresse muito forte por calor", rotulo: "estresse muito forte por calor" },
+    { de: 46, ate: 99, cor: "#6b21a8", texto: "#fff", nome: "Estresse extremo por calor", rotulo: "estresse extremo por calor" },
   ];
   const faixa = (u) => FAIXAS.find((f) => u >= f.de && u < f.ate) || FAIXAS[4];
   const rotuloFaixa = (f) => (f.de < -50 ? `${f.nome} (<${f.ate} °C)` : f.ate > 90 ? `${f.nome} (≥${f.de} °C)` : `${f.nome} (${f.de}–${f.ate} °C)`);
@@ -229,9 +229,10 @@
       el("div", { class: "rotulo-grupo" }, "Horas e períodos por faixa de estresse térmico"),
       el("div", { class: "horas", "aria-label": "Horas e períodos em cada faixa de estresse térmico" }, ...grupos.map(({ f, periodos }) => {
         const total = periodos.reduce((n, g) => n + g.fim - g.inicio + 1, 0), periodo = textoPeriodos(periodos);
+        const descricao = f.de === 9 ? " do dia sem estresse térmico" : ` do dia com estresse térmico ${f.rotulo.replace(/^estresse\s+/, "")}`;
         return el("div", { class: "faixa-horas", title: `${total} h · ${f.rotulo} · ${periodo}` },
-          el("b", {}, `${total} h`),
-          el("span", { class: "nome-faixa" }, el("i", { class: "ponto-faixa", style: `background:${f.cor}` }), `${intervaloFaixa(f)} · ${f.rotulo}`),
+          el("div", { class: "resumo-faixa" }, el("b", {}, `${total} h`), el("span", { class: "texto-resumo" }, descricao)),
+          el("span", { class: "intervalo" }, el("i", { class: "ponto-faixa", style: `background:${f.cor}` }), intervaloFaixa(f)),
           el("small", { class: "periodo" }, periodo));
       })),
       el("p", { class: "explica" }, `A UTCI combina a temperatura do ar (máxima de ${grau(d.temp.max)}), a radiação solar, a umidade e o vento. Os alertas também consideram a duração do calor e o acúmulo entre dias.`),
