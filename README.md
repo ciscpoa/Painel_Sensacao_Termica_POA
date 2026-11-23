@@ -7,12 +7,13 @@ em `docs/` e é publicada pelo GitHub Pages. Uma automação (GitHub Actions) re
 
 ## O que o painel mostra
 
-- **Nível de alerta do dia** (1 a 5), com o motivo, o horário mais crítico e o que fazer, em
-  linguagem simples. O alerta principal e a imagem compartilhável mostram somente “Nível X”.
-- **Sensação térmica agora e máxima do dia**, esta última com o respectivo horário.
+- **Calor Nível 1 a 5**, com o motivo centralizado em negrito, o horário mais crítico e o que fazer.
+  A mesma nomenclatura aparece no alerta principal, nos cartões, na explicação e nos detalhes técnicos.
+- **Imagem compartilhável:** selo ampliado e, em um único quadro branco, horário crítico, sensação
+  térmica, UV e máxima do dia em quatro linhas com marcadores circulares.
 - **Próximos 5 dias:** nível, condição do tempo, máxima e mínima, sensação térmica, chuva e vento.
-- **Condições do dia:** tempo, temperaturas, chuva, umidade e vento do PoaClima; madrugada pelo
-  Open-Meteo, pois ela participa das regras do protocolo.
+- **Condições do dia:** tempo, temperaturas, chuva, umidade e vento do PoaClima, centralizados e
+  empilhados. A madrugada não aparece nesse card, mas continua no Open-Meteo e nas regras do protocolo.
 - **Hora a hora:** sensação térmica (UTCI) e temperatura, com as faixas do protocolo e a diferença
   entre os modelos; chuva por hora.
 - **Detalhes técnicos:** valores diários do PoaClima e comparação ECMWF × GFS, UTCI, IBUTG, chuva,
