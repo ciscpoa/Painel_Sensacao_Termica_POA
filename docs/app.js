@@ -181,20 +181,22 @@
 
   // ------------------------------------------------------------------ compartilhar
   const URL_PAINEL = "https://ciscpoa.github.io/protocolo_de_calor_Porto_Alegre/";
-  const textoCompartilhamento = (d) => `${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Nível ${d.nivel}. `
+  const textoCompartilhamento = (d) => `${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Calor Nível ${d.nivel}. `
     + `Sensação térmica máxima ${grau(d.sensacao.max)} às ${d.sensacao.h_max}. ${d.motivo} Acesse o painel: ${URL_PAINEL}`;
 
-  function desenharTexto(ctx, texto, x, y, largura, alturaLinha, maxLinhas = 3) {
+  function desenharTexto(ctx, texto, x, y, largura, alturaLinha, maxLinhas = 3, centralizar = false) {
+    const posX = centralizar ? x + largura / 2 : x;
+    ctx.textAlign = centralizar ? "center" : "left";
     let linha = "", linhas = 0;
     for (const palavra of texto.split(" ")) {
       const teste = linha ? `${linha} ${palavra}` : palavra;
       if (ctx.measureText(teste).width > largura && linha) {
         linhas += 1;
-        if (linhas >= maxLinhas) { ctx.fillText(`${linha}…`, x, y); return y + alturaLinha; }
-        ctx.fillText(linha, x, y); y += alturaLinha; linha = palavra;
+        if (linhas >= maxLinhas) { ctx.fillText(`${linha}…`, posX, y); return y + alturaLinha; }
+        ctx.fillText(linha, posX, y); y += alturaLinha; linha = palavra;
       } else { linha = teste; }
     }
-    if (linha) { ctx.fillText(linha, x, y); y += alturaLinha; }
+    if (linha) { ctx.fillText(linha, posX, y); y += alturaLinha; }
     return y;
   }
 
@@ -216,40 +218,49 @@
     ctx.font = '500 24px "Public Sans", sans-serif';
     ctx.fillText(`${rotuloDia(d)}, ${ddmmaaaa(d.data)}`, 1140, 58);
 
-    // Apenas o nível, centralizado, em todos os estados do protocolo.
-    const nivel = `NÍVEL ${d.nivel}`;
-    ctx.font = '800 26px "Public Sans", sans-serif';
-    const larguraNivel = ctx.measureText(nivel).width + 48;
+    // Mais 20% sobre o selo anterior, mantendo texto e contorno na mesma caixa.
+    const nivel = `CALOR NÍVEL ${d.nivel}`;
+    ctx.font = '800 54.6px "Public Sans", sans-serif';
+    const larguraNivel = ctx.measureText(nivel).width + 100;
     ctx.fillStyle = d.cor_fg;
-    caixa(ctx, (1200 - larguraNivel) / 2, 82, larguraNivel, 56, 28);
-    ctx.fillStyle = d.cor_bg; ctx.textAlign = "center"; ctx.fillText(nivel, 600, 119);
+    caixa(ctx, (1200 - larguraNivel) / 2, 60, larguraNivel, 108, 54);
+    ctx.fillStyle = d.cor_bg; ctx.textAlign = "center"; ctx.fillText(nivel, 600, 138);
+
+    // Motivo centralizado e em negrito, imediatamente abaixo do selo.
+    ctx.fillStyle = d.cor_fg; ctx.font = '700 29px "Public Sans", sans-serif';
+    let y = desenharTexto(ctx, d.motivo, 60, 198, 1080, 34, 2, true);
     ctx.textAlign = "left";
 
-    ctx.fillStyle = d.cor_fg; ctx.font = '500 29px "Public Sans", sans-serif';
-    let y = desenharTexto(ctx, d.motivo, 60, 178, 1080, 34, 2);
-    if (d.janela_ini != null) {
-      ctx.fillStyle = "rgba(255,255,255,.45)"; caixa(ctx, 50, y + 4, 1100, 54, 14);
-      ctx.fillStyle = d.cor_fg; ctx.font = '700 27px "Public Sans", sans-serif';
-      ctx.fillText(`Horário mais crítico: ${d.janela_ini}h às ${d.janela_fim}h`, 76, y + 40);
-      y += 68;
-    } else { y += 10; }
-
     const atual = sensacaoAgora(d), temUV = d.uv && apresentarUV(d.uv.max) != null;
-    ctx.fillStyle = d.cor_fg; ctx.font = '650 25px "Public Sans", sans-serif';
-    if (atual) {
-      ctx.fillText(`Sensação térmica agora: ${grau(atual.valor)} (${atual.hora})`, 60, y + 24);
-      ctx.fillText(`Máxima do dia: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}`, 650, y + 24);
-      if (temUV) ctx.fillText(`UV máx.: ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome}`, 60, y + 56);
-    } else {
-      ctx.fillText(`Sensação térmica máxima: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}`, 60, y + 24);
-      if (temUV) ctx.fillText(`UV máx.: ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome}`, 720, y + 24);
-    }
+    const janela = d.janela_ini != null ? `${d.janela_ini}h às ${d.janela_fim}h` : "sem janela crítica ativa";
+    const sensacao = atual ? `Sensação térmica agora: ${grau(atual.valor)} (${atual.hora})`
+      : `Sensação térmica: previsão para ${rotuloDia(d).toLowerCase()}`;
+    const uv = temUV ? `UV máx.: ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome}` : "UV máx.: indisponível nesta atualização";
+    const linhasInfo = [
+      `Horário mais crítico: ${janela}`,
+      sensacao,
+      uv,
+      `Máxima do dia: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}`,
+    ];
+
+    // Um único quadro branco, quatro linhas e um círculo preenchido por linha.
+    const compacto = y > 240, quadroTopo = y + 8, alturaQuadro = 180;
+    ctx.fillStyle = "rgba(255,255,255,.45)"; caixa(ctx, 50, quadroTopo, 1100, alturaQuadro, 16);
+    ctx.fillStyle = d.cor_fg; ctx.font = `650 ${compacto ? 23 : 25}px "Public Sans", sans-serif`;
+    linhasInfo.forEach((texto, i) => {
+      const baseline = quadroTopo + 34 + i * 39;
+      ctx.beginPath(); ctx.arc(78, baseline - 8, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillText(texto, 98, baseline);
+    });
+    y = quadroTopo + alturaQuadro;
 
     ctx.font = '700 24px "Public Sans", sans-serif';
-    ctx.fillText(d.nivel > 1 ? "O que fazer" : "Recomendações", 60, y + 94);
-    ctx.font = '400 23px "Public Sans", sans-serif';
-    y += 132;
-    d.publico.slice(0, 2).forEach((texto) => { y = desenharTexto(ctx, `• ${texto}`, 60, y, 1080, 29, 2) + 7; });
+    ctx.fillText(d.nivel > 1 ? "O que fazer" : "Recomendações", 60, y + (compacto ? 24 : 32));
+    ctx.font = `400 ${compacto ? 20 : 23}px "Public Sans", sans-serif`;
+    y += compacto ? 50 : 64;
+    d.publico.slice(0, 2).forEach((texto) => {
+      y = desenharTexto(ctx, `• ${texto}`, 60, y, 1080, compacto ? 22 : 29, 2) + (compacto ? 4 : 7);
+    });
     ctx.fillStyle = d.cor_fg; ctx.font = '500 19px "Public Sans", sans-serif';
     ctx.textAlign = "right"; ctx.fillText("ciscpoa.github.io/protocolo_de_calor_Porto_Alegre", 1140, 606);
     return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
@@ -295,7 +306,7 @@
     a.style.background = d.cor_bg; a.style.color = d.cor_fg;
     trocar(a,
       el("div", { class: "nivel-nome" },
-        el("div", { class: "nivel" }, el("span", { class: "num", style: `background:${d.cor_fg};color:${d.cor_bg}` }, `Nível ${d.nivel}`))),
+        el("div", { class: "nivel" }, el("span", { class: "num", style: `background:${d.cor_fg};color:${d.cor_bg}` }, `Calor Nível ${d.nivel}`))),
       el("p", { class: "motivo" }, d.motivo),
       d.janela_ini != null ? el("div", { class: "janela" }, `Horário mais crítico: ${d.janela_ini}h às ${d.janela_fim}h`) : null,
       el("h3", {}, d.nivel > 1 ? "O que fazer" : "Recomendações"),
@@ -372,13 +383,11 @@
   function renderTempo() {
     const d = DIAS[selecionado], p = d.poaclima;
     trocar($("tempo-dia"),
-      el("h2", { class: "rotulo" }, "Condições do dia", el("small", {}, "PoaClima / Catavento · madrugada pelo Open-Meteo")),
+      el("h2", { class: "rotulo" }, "Condições do dia", el("small", {}, "PoaClima / Catavento")),
       el("div", { class: "linha1" }, icone(d.icone, 52), el("div", {}, el("div", { class: "cond" }, d.condicao), el("div", { class: "estab" }, d.tempo))),
       el("div", { class: "numeros" },
         el("div", {}, el("span", {}, "Temperatura máxima"), el("strong", {}, grau(d.temp.max)), el("small", {}, "PoaClima")),
         el("div", {}, el("span", {}, "Temperatura mínima"), el("strong", {}, grau(d.temp.min)), el("small", {}, "PoaClima")),
-        el("div", {}, el("span", {}, "Madrugada (0h–6h)"), el("strong", {}, grau(d.tmin_noite)),
-          el("small", {}, `Open-Meteo · ${d.noite_quente ? "quente" : d.noite_fresca ? "fresca" : "amena"}`)),
         el("div", {}, el("span", {}, "Chuva prevista"), el("strong", {}, `${f1(p.chuva_mm)} mm`), el("small", {}, "PoaClima")),
         el("div", {}, el("span", {}, "Umidade máxima / mínima"), el("strong", {}, `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`), el("small", {}, "PoaClima")),
         el("div", {}, el("span", {}, "Vento previsto"), el("strong", {}, `${f0(p.vento_kmh)} km/h`), el("small", {}, `direção ${p.vento_dir} · PoaClima`)),
@@ -419,11 +428,11 @@
       const uvMax = d.uv ? apresentarUV(d.uv.max) : null, uvNivel = d.uv ? nivelUV(d.uv.max) : null;
       return el("button", {
         class: "dia", type: "button", "aria-pressed": String(i === selecionado),
-        "aria-label": `${rotuloDia(d)} ${ddmm(d.data)}: nível ${d.nivel}, ${d.nome}; sensação térmica até ${f0(d.sensacao.max)} °C`,
+        "aria-label": `${rotuloDia(d)} ${ddmm(d.data)}: Calor Nível ${d.nivel}; sensação térmica até ${f0(d.sensacao.max)} °C`,
         onclick: () => { selecionado = i; renderTudo(); },
       },
         el("div", { class: "cab" }, el("b", {}, rotuloDia(d)), el("span", {}, ddmm(d.data))),
-        el("span", { class: "chip", style: `background:${d.cor_bg};color:${d.cor_fg}` }, el("i", {}, String(d.nivel)), d.nome),
+        el("span", { class: "chip", style: `background:${d.cor_bg};color:${d.cor_fg}` }, `Calor Nível ${d.nivel}`),
         el("div", { class: "sens", title: "Sensação térmica calculada pelo Open-Meteo" }, el("span", {}, "Sensação máxima"),
           el("div", {}, el("i", { class: "pt", style: `background:${fx.cor}` }), el("strong", {}, grau(d.sensacao.max)))),
         el("div", { class: "cond" }, icone(d.icone, 28), d.condicao),
@@ -660,7 +669,7 @@
     trocar($("niveis"), ...[1, 2, 3, 4, 5].map((n) => {
       const c = P.niveis[n];
       return el("div", { class: "nivel-linha" },
-        el("span", { class: "chip", style: `background:${c.cor_bg};color:${c.cor_fg}` }, el("i", {}, String(n)), c.nome),
+        el("span", { class: "chip", style: `background:${c.cor_bg};color:${c.cor_fg}` }, `Calor Nível ${n}`),
         el("p", {}, el("strong", {}, "Quando: "), c.quando),
         el("ul", {}, ...c.publico.map((t) => el("li", {}, t))));
     }));
@@ -692,7 +701,7 @@
       ["Vento / rajada", (d, x) => `${f0(x.vento_min)}–${f0(x.vento_max)} km/h ${x.vento_dir} ${x.vento_seta} · ${f0(x.rajada_max)}`],
       ["Índice UV máximo (NOAA/GFS)", (d) => d.uv && apresentarUV(d.uv.max) != null ? `UV ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome} (${d.uv.h_max})` : "—"],
       ["Índice UV, céu limpo (NOAA/GFS)", (d) => d.uv && apresentarUV(d.uv.max_ceu_limpo) != null ? `UV ${apresentarUV(d.uv.max_ceu_limpo)} (${d.uv.h_max_ceu_limpo})` : "—"],
-      ["Nível do protocolo · média (ensemble)", (d) => el("span", { class: "pilula", style: `background:${d.cor_bg};color:${d.cor_fg}` }, `N${d.nivel} ${d.nome}`)],
+      ["Nível do protocolo · média (ensemble)", (d) => el("span", { class: "pilula", style: `background:${d.cor_bg};color:${d.cor_fg}` }, `Calor Nível ${d.nivel}`)],
       ["Gatilho", (d) => d.gatilho],
       ["Janela crítica", (d) => d.janela],
       ["Mínima da madrugada (0h–6h)", (d) => `${f1(d.tmin_noite)} °C`],
