@@ -111,8 +111,8 @@ p { max-width: 75ch; }
 .cabecalho .sub { margin: 0; color: #d8eeee; font-size: clamp(15px, 0.3vw + 14px, 18px); }
 .cabecalho .acoes { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 16px; }
 .cabecalho .atualizado { font-size: 13px; color: #e5f4f3; padding: 6px 0; }
-.btn { min-height: 44px; border: 1px solid rgba(244, 255, 255, 0.48); background: rgba(244, 255, 255, 0.10); color: #f4ffff; border-radius: 999px;
-  padding: 9px 16px; font: 600 14px/1.2 var(--f-corpo); cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out, transform 150ms ease-out; }
+.btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(244, 255, 255, 0.48); background: rgba(244, 255, 255, 0.10); color: #f4ffff; border-radius: 999px;
+  padding: 9px 16px; font: 600 14px/1.2 var(--f-corpo); text-decoration: none; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out, transform 150ms ease-out; }
 .btn:hover { background: #f4ffff; color: #0b3b4c; }
 .btn:active { transform: translateY(1px); }
 .atalhos { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--superficie) 94%, transparent); border-bottom: 1px solid var(--borda); box-shadow: 0 4px 16px rgba(11,59,76,.05); backdrop-filter: blur(14px); }
@@ -262,7 +262,8 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .dia .info { font-size: 12px; color: var(--tinta2); line-height: 1.45; }
 .dia .uv-dia { align-self: flex-start; margin-top: auto; border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 650; }
 .marca-noite { align-self: flex-start; font-size: 11px; font-weight: 650; border-radius: 4px; padding: 2px 7px; background: var(--lavagem); color: var(--tinta2); }
-@media (min-width: 760px) { .dias { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 760px) { .dias { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .dias { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 
 .graficos { display: grid; gap: 18px; }
 .cartao-topo { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 14px; }
@@ -373,6 +374,7 @@ footer .emergencia { font-size: 16px; }
     </div>
     <div class="acoes">
       <span class="atualizado" id="atualizado"></span>
+      <a class="btn" href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer" aria-label="Abrir o PoaClima em nova aba">PoaClima ↗</a>
       <button class="btn" id="tema" type="button">Tema escuro</button>
     </div>
   </div>
@@ -394,7 +396,7 @@ footer .emergencia { font-size: 16px; }
   </section>
 
   <section class="secao" id="proximos-dias" aria-labelledby="titulo-dias">
-    <div class="cab-secao"><h2 id="titulo-dias">Próximos dias</h2><p>Escolha um dia para atualizar o alerta, a UTCI, o índice UV e os gráficos.</p></div>
+    <div class="cab-secao"><h2 id="titulo-dias">Próximos dias</h2><p>Tempo, temperatura, chuva e vento: PoaClima/Catavento. Sensação térmica e alertas: Open-Meteo. Escolha um dia para atualizar o painel.</p></div>
     <div class="dias" id="dias" role="group" aria-label="Escolha o dia"></div>
   </section>
 
@@ -404,8 +406,8 @@ footer .emergencia { font-size: 16px; }
       <figure class="cartao" style="margin:0">
         <div class="cartao-topo">
           <div>
-            <h3>A sensação térmica (UTCI) é o que aciona os alertas</h3>
-            <p class="nota">A UTCI combina temperatura do ar, umidade, vento e radiação solar. Ative um ou mais modelos para comparar as linhas: <strong>contínua para UTCI</strong> e <strong>tracejada para temperatura do ar</strong>.</p>
+            <h3>A sensação térmica é o que aciona os alertas</h3>
+            <p class="nota">Calculada pelo Open-Meteo, ela combina temperatura do ar, umidade, vento e radiação solar. Ative um ou mais modelos para comparar as linhas: <strong>contínua para sensação térmica</strong> e <strong>tracejada para temperatura do ar</strong>.</p>
           </div>
           <button class="btn-tabela" type="button" data-tabela="graf-calor" aria-pressed="false">Tabela</button>
         </div>
@@ -421,7 +423,7 @@ footer .emergencia { font-size: 16px; }
         <div class="cartao-topo">
           <div>
             <h3>Chuva prevista (mm por hora)</h3>
-            <p class="nota">Os dois modelos lado a lado, hora a hora, no centro de Porto Alegre. Toque em um modelo para mostrar ou esconder. Os totais diários nos mini quadros usam NOAA/GFS.</p>
+            <p class="nota">As barras horárias comparam ECMWF/IFS e NOAA/GFS via Open-Meteo, no centro de Porto Alegre. Os totais diários nos mini quadros são do PoaClima/Catavento.</p>
           </div>
           <button class="btn-tabela" type="button" data-tabela="graf-chuva" aria-pressed="false">Tabela</button>
         </div>
@@ -449,11 +451,12 @@ footer .emergencia { font-size: 16px; }
 
   <details class="tecnico" id="tecnico">
     <summary>Detalhes técnicos</summary>
+    <p><strong>Fontes separadas:</strong> a previsão pública diária de tempo, temperatura, chuva, umidade e vento é do <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima/Catavento</a>. As séries horárias, a madrugada, a sensação térmica, o IBUTG, o índice UV e os cálculos dos alertas usam Open-Meteo. A tabela abaixo conserva os valores dos modelos para comparação técnica.</p>
     <div class="segmentado" id="modelo-tec" role="group" aria-label="Modelo"></div>
     <div class="vista-tabela" id="tabela-tec" style="max-height:none"></div>
     <h3 style="font-size:17px;margin:20px 0 8px">Regras do Protocolo</h3>
     <ul>
-      <li>Sensação térmica (UTCI) da Média (ensemble) dos modelos ECMWF/IFS e NOAA/GFS, no centro de Porto Alegre (−30,08; −51,21).</li>
+      <li>Sensação térmica (UTCI) da Média (ensemble) dos modelos ECMWF/IFS e NOAA/GFS, no centro de Porto Alegre (−30,08; −51,21). A previsão diária do PoaClima não altera os níveis.</li>
       <li>Nível 5: UTCI ≥ 48 °C por mais de 1 hora. Nível 4: ≥ 38 °C por mais de 2 horas. Nível 3: ≥ 34 °C por mais de 2 horas.</li>
       <li>Nível 2: UTCI ≥ 32 °C por 4 horas ou ≥ 28 °C por 7 horas. Com madrugada (0h–6h) quente, ≥ 22 °C, vale já no 1º dia; com madrugada amena, de 20 a 22 °C, a partir do 2º dia seguido de calor; com madrugada abaixo de 20 °C, o dia fica em Nível 1.</li>
       <li>Atenuação de N3 para N2: exige no máximo 3 horas de UTCI ≥ 34 °C, pico abaixo de 36,5 °C e madrugada abaixo de 18,5 °C.</li>
@@ -472,7 +475,7 @@ footer .emergencia { font-size: 16px; }
     <img class="logos-rodape" src="img/dvs-cisc.png" width="3972" height="453" alt="CISC, Diretoria de Vigilância em Saúde, Sistema Único de Saúde e Prefeitura de Porto Alegre – Secretaria de Saúde">
     <div class="creditos">
       <p><strong>Painel de Calor de Porto Alegre</strong>, desenvolvido pelo CISC – Centro de Informação em Saúde e Clima.</p>
-      <p>Previsão: modelos ECMWF/IFS e NOAA/GFS, via <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0), atualizada automaticamente a cada 3 horas. Previsões têm incerteza, que aumenta nos dias mais distantes.</p>
+      <p>Previsão diária: <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima</a> / Catavento Meteorologia. Sensação térmica, séries horárias, índice UV e alertas: modelos ECMWF/IFS e NOAA/GFS, via <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> (CC BY 4.0). Atualização automática a cada 3 horas; previsões têm incerteza crescente nos dias mais distantes.</p>
       <p class="emergencia"><strong>Emergência:</strong> SAMU <strong>192</strong> · Defesa Civil <strong>199</strong> · Bombeiros <strong>193</strong></p>
     </div>
   </div>

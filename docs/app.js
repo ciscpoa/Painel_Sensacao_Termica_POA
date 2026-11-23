@@ -72,19 +72,33 @@
   const trocar = (alvo, ...filhos) => alvo.replaceChildren(...filhos.filter((f) => f != null && f !== false));
   const svgEl = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; };
 
-  // Ícones do tempo (códigos representativos do protocolo: 0, 2, 3, 51, 63, 95)
-  function icone(codigo, tam = 40) {
+  // Ícones determinados pela condição diária do PoaClima. São SVGs locais:
+  // o painel não depende da fonte de emojis do aparelho de quem o abre.
+  function icone(tipo, tam = 40) {
     const nuvem = `<path d="M14 30h17a7 7 0 0 0 0-14 9 9 0 0 0-17 2 6 6 0 0 0 0 12z" fill="var(--nuvem2)" stroke="var(--nuvem)" stroke-width="1.2"/>`;
+    const escura = nuvem.replace("var(--nuvem2)", "var(--nuvem)");
     const sol = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="var(--sol)"/>` + Array.from({ length: 8 }, (_, i) => {
       const a = (i * Math.PI) / 4, r1 = r + 2.5, r2 = r + 5.5;
       return `<line x1="${cx + r1 * Math.cos(a)}" y1="${cy + r1 * Math.sin(a)}" x2="${cx + r2 * Math.cos(a)}" y2="${cy + r2 * Math.sin(a)}" stroke="var(--sol)" stroke-width="2" stroke-linecap="round"/>`;
     }).join("");
     const gotas = (n) => [12, 19, 26].slice(0, n).map((x) => `<line x1="${x}" y1="33" x2="${x - 2}" y2="38" stroke="var(--gota)" stroke-width="2" stroke-linecap="round"/>`).join("");
-    const escura = nuvem.replace("var(--nuvem2)", "var(--nuvem)");
-    const corpo = {
-      0: sol(20, 20, 8), 2: sol(26, 14, 6) + nuvem, 3: escura, 51: nuvem + gotas(2), 63: escura + gotas(3),
-      95: escura + `<path d="M21 29l-5 7h4l-2 6 7-9h-4l2-4z" fill="var(--raio)"/>`,
-    }[codigo] || sol(20, 20, 8);
+    const raio = `<path d="M21 29l-5 7h4l-2 6 7-9h-4l2-4z" fill="var(--raio)"/>`;
+    const geada = `<g stroke="var(--gota)" stroke-width="1.5" stroke-linecap="round"><line x1="20" y1="31" x2="20" y2="41"/><line x1="15.7" y1="33.5" x2="24.3" y2="38.5"/><line x1="15.7" y1="38.5" x2="24.3" y2="33.5"/></g>`;
+    const nevoeiro = `<g stroke="var(--nuvem)" stroke-width="2" stroke-linecap="round"><line x1="8" y1="34" x2="32" y2="34"/><line x1="12" y1="39" x2="28" y2="39"/></g>`;
+    const corpos = {
+      "sol": sol(20, 20, 8),
+      "sol-poucas-nuvens": sol(27, 13, 6) + nuvem,
+      "sol-nuvens": sol(28, 12, 6) + escura,
+      "nublado": escura,
+      "chuvisco": nuvem + gotas(2),
+      "chuva": escura + gotas(3),
+      "chuva-raios": escura + gotas(2) + raio,
+      "sol-chuva": sol(27, 13, 6) + nuvem + gotas(3),
+      "sol-chuva-raios": sol(28, 12, 6) + escura + gotas(2) + raio,
+      "geada": nuvem + geada,
+      "nevoeiro": nuvem + nevoeiro,
+    };
+    const corpo = corpos[tipo] || escura;
     return svgEl(`<svg width="${tam}" height="${tam}" viewBox="0 0 40 42" aria-hidden="true">${corpo}</svg>`);
   }
 
@@ -139,6 +153,10 @@
     }
     return encontrado;
   }
+  function sensacaoAgora(d) {
+    const i = indiceHoraAtual(d.data);
+    return i < 0 ? null : { valor: H.sensacao[i], hora: H.tempo[i].slice(11, 16) };
+  }
   const MODELOS = { consenso: "Média (ensemble)", ecmwf: "ECMWF/IFS", gfs: "NOAA/GFS" };
   const CORES_MODELOS = { consenso: "var(--modelo-consenso)", ecmwf: "var(--modelo-ecmwf)", gfs: "var(--modelo-gfs)" };
   const CORES_TEMP = { consenso: "var(--modelo-consenso-temp)", ecmwf: "var(--modelo-ecmwf-temp)", gfs: "var(--modelo-gfs-temp)" };
@@ -149,8 +167,7 @@
   const estadoCalor = { modelos: { consenso: true, ecmwf: false, gfs: false }, sensacao: true, temp: true, diferenca: true, picos: true };
   const estadoChuva = { ecmwf: true, gfs: true };
   const CHUVA = [{ id: "ecmwf", nome: "ECMWF/IFS", cor: "var(--s1)", dados: H.chuva_ecmwf }, { id: "gfs", nome: "NOAA/GFS", cor: "var(--s2)", dados: H.chuva_gfs }];
-  const chuvaDia = (d) => [d.modelos.gfs.chuva_mm, d.modelos.gfs.chuva_mm];
-  const chanceDia = (d) => [d.modelos.gfs.nmep_10, d.modelos.gfs.nmep_10];
+  const chuvaDia = (d) => d.poaclima ? d.poaclima.chuva_mm : null;
 
   // ------------------------------------------------------------------ cabeçalho e aviso
   const gerado = P.gerado_em;
@@ -164,8 +181,8 @@
 
   // ------------------------------------------------------------------ compartilhar
   const URL_PAINEL = "https://ciscpoa.github.io/protocolo_de_calor_Porto_Alegre/";
-  const textoCompartilhamento = (d) => `${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Nível ${d.nivel}, ${d.nome}. `
-    + `UTCI máxima ${grau(d.sensacao.max)}. ${d.motivo} Acesse o painel: ${URL_PAINEL}`;
+  const textoCompartilhamento = (d) => `${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Nível ${d.nivel}. `
+    + `Sensação térmica máxima ${grau(d.sensacao.max)} às ${d.sensacao.h_max}. ${d.motivo} Acesse o painel: ${URL_PAINEL}`;
 
   function desenharTexto(ctx, texto, x, y, largura, alturaLinha, maxLinhas = 3) {
     let linha = "", linhas = 0;
@@ -198,34 +215,41 @@
     ctx.textAlign = "right";
     ctx.font = '500 24px "Public Sans", sans-serif';
     ctx.fillText(`${rotuloDia(d)}, ${ddmmaaaa(d.data)}`, 1140, 58);
-    ctx.textAlign = "left";
 
+    // Apenas o nível, centralizado, em todos os estados do protocolo.
     const nivel = `NÍVEL ${d.nivel}`;
     ctx.font = '800 26px "Public Sans", sans-serif';
-    caixa(ctx, 50, 80, ctx.measureText(nivel).width + 48, 58, 29);
-    ctx.fillStyle = d.cor_bg; ctx.fillText(nivel, 74, 119);
+    const larguraNivel = ctx.measureText(nivel).width + 48;
+    ctx.fillStyle = d.cor_fg;
+    caixa(ctx, (1200 - larguraNivel) / 2, 82, larguraNivel, 56, 28);
+    ctx.fillStyle = d.cor_bg; ctx.textAlign = "center"; ctx.fillText(nivel, 600, 119);
+    ctx.textAlign = "left";
 
-    ctx.fillStyle = d.cor_fg; ctx.font = '800 64px "IBM Plex Sans", sans-serif';
-    ctx.fillText(d.nome, 50, 210);
-    ctx.font = '500 30px "Public Sans", sans-serif';
-    let y = desenharTexto(ctx, d.motivo, 60, 260, 1080, 38, 2);
-
+    ctx.fillStyle = d.cor_fg; ctx.font = '500 29px "Public Sans", sans-serif';
+    let y = desenharTexto(ctx, d.motivo, 60, 178, 1080, 34, 2);
     if (d.janela_ini != null) {
-      ctx.fillStyle = "rgba(255,255,255,.45)"; caixa(ctx, 50, y + 8, 1100, 66, 16);
-      ctx.fillStyle = d.cor_fg; ctx.font = '700 30px "Public Sans", sans-serif';
-      ctx.fillText(`Horário mais crítico: ${d.janela_ini}h às ${d.janela_fim}h`, 76, y + 51);
-      y += 92;
-    } else { y += 24; }
+      ctx.fillStyle = "rgba(255,255,255,.45)"; caixa(ctx, 50, y + 4, 1100, 54, 14);
+      ctx.fillStyle = d.cor_fg; ctx.font = '700 27px "Public Sans", sans-serif';
+      ctx.fillText(`Horário mais crítico: ${d.janela_ini}h às ${d.janela_fim}h`, 76, y + 40);
+      y += 68;
+    } else { y += 10; }
 
-    ctx.fillStyle = d.cor_fg; ctx.font = '650 27px "Public Sans", sans-serif';
-    ctx.fillText(`UTCI máxima: ${grau(d.sensacao.max)}`, 60, y + 22);
-    if (d.uv && apresentarUV(d.uv.max) != null) ctx.fillText(`UV máx.: ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome}`, 650, y + 22);
+    const atual = sensacaoAgora(d), temUV = d.uv && apresentarUV(d.uv.max) != null;
+    ctx.fillStyle = d.cor_fg; ctx.font = '650 25px "Public Sans", sans-serif';
+    if (atual) {
+      ctx.fillText(`Sensação térmica agora: ${grau(atual.valor)} (${atual.hora})`, 60, y + 24);
+      ctx.fillText(`Máxima do dia: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}`, 650, y + 24);
+      if (temUV) ctx.fillText(`UV máx.: ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome}`, 60, y + 56);
+    } else {
+      ctx.fillText(`Sensação térmica máxima: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}`, 60, y + 24);
+      if (temUV) ctx.fillText(`UV máx.: ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome}`, 720, y + 24);
+    }
 
-    ctx.font = '700 25px "Public Sans", sans-serif';
-    ctx.fillText(d.nivel > 1 ? "O que fazer" : "Recomendações", 60, y + 76);
-    ctx.font = '400 24px "Public Sans", sans-serif';
-    y += 116;
-    d.publico.slice(0, 2).forEach((texto) => { y = desenharTexto(ctx, `• ${texto}`, 60, y, 1080, 31, 2) + 8; });
+    ctx.font = '700 24px "Public Sans", sans-serif';
+    ctx.fillText(d.nivel > 1 ? "O que fazer" : "Recomendações", 60, y + 94);
+    ctx.font = '400 23px "Public Sans", sans-serif';
+    y += 132;
+    d.publico.slice(0, 2).forEach((texto) => { y = desenharTexto(ctx, `• ${texto}`, 60, y, 1080, 29, 2) + 7; });
     ctx.fillStyle = d.cor_fg; ctx.font = '500 19px "Public Sans", sans-serif';
     ctx.textAlign = "right"; ctx.fillText("ciscpoa.github.io/protocolo_de_calor_Porto_Alegre", 1140, 606);
     return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
@@ -271,8 +295,7 @@
     a.style.background = d.cor_bg; a.style.color = d.cor_fg;
     trocar(a,
       el("div", { class: "nivel-nome" },
-        el("div", { class: "nivel" }, el("span", { class: "num", style: `background:${d.cor_fg};color:${d.cor_bg}` }, `Nível ${d.nivel}`)),
-        el("h2", { class: "nome" }, d.nome)),
+        el("div", { class: "nivel" }, el("span", { class: "num", style: `background:${d.cor_fg};color:${d.cor_bg}` }, `Nível ${d.nivel}`))),
       el("p", { class: "motivo" }, d.motivo),
       d.janela_ini != null ? el("div", { class: "janela" }, `Horário mais crítico: ${d.janela_ini}h às ${d.janela_fim}h`) : null,
       el("h3", {}, d.nivel > 1 ? "O que fazer" : "Recomendações"),
@@ -319,15 +342,15 @@
   const listaPeriodos = (grupos) => el("ul", { class: "lista-periodos" }, ...grupos.map((g) => el("li", {}, textoPeriodo(g))));
 
   function renderSensacao() {
-    const d = DIAS[selecionado], iAtual = indiceHoraAtual(d.data), ehAtual = iAtual >= 0;
-    const valor = ehAtual ? H.sensacao[iAtual] : d.sensacao.max;
-    const hora = ehAtual ? H.tempo[iAtual].slice(11, 16) : d.sensacao.h_max;
+    const d = DIAS[selecionado], atual = sensacaoAgora(d), ehAtual = atual !== null;
+    const valor = ehAtual ? atual.valor : d.sensacao.max;
+    const hora = ehAtual ? atual.hora : d.sensacao.h_max;
     const fx = faixa(valor);
     const grupos = FAIXAS.map((f) => ({ f, periodos: segmentosFaixa(d, f) })).filter((g) => g.periodos.length)
       .sort((a, b) => a.f.de - b.f.de);
     trocar($("sensacao"),
-      el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica atual (UTCI)" : "Sensação térmica máxima (UTCI)",
-        el("small", {}, ehAtual ? "valor da hora mais recente, em Porto Alegre" : "pico previsto para o dia selecionado")),
+      el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica agora" : "Sensação térmica máxima",
+        el("small", {}, ehAtual ? "previsão Open-Meteo para a hora atual, em Porto Alegre" : "pico Open-Meteo previsto para o dia selecionado")),
       el("div", { class: "valor" }, el("strong", {}, grau(valor)),
         el("span", { class: "pilula-faixa", style: `background:${fx.cor};color:${textoFaixa(fx)}` }, fx.nome),
         el("span", { class: "hora" }, `às ${hora}`)),
@@ -342,22 +365,23 @@
           listaPeriodos(periodos),
           el("span", { class: "rotulo-estresse" }, rotulo));
       })),
-      el("p", { class: "explica" }, `A UTCI combina a temperatura do ar (máxima de ${grau(d.temp.max)}), a radiação solar, a umidade e o vento. Os alertas também consideram a duração do calor e o acúmulo entre dias.`),
+      el("p", { class: "explica" }, "A sensação térmica é calculada pelo Open-Meteo com temperatura do ar, radiação solar, umidade e vento. Os alertas também consideram a duração do calor e o acúmulo entre dias."),
     );
   }
 
   function renderTempo() {
-    const d = DIAS[selecionado], [cE, cG] = chuvaDia(d), [pE, pG] = chanceDia(d);
+    const d = DIAS[selecionado], p = d.poaclima;
     trocar($("tempo-dia"),
-      el("h2", { class: "rotulo" }, "Condições do dia", el("small", {}, "temperatura, chuva e vento")),
-      el("div", { class: "linha1" }, icone(d.codigo, 52), el("div", {}, el("div", { class: "cond" }, d.condicao), el("div", { class: "estab" }, d.tempo))),
+      el("h2", { class: "rotulo" }, "Condições do dia", el("small", {}, "PoaClima / Catavento · madrugada pelo Open-Meteo")),
+      el("div", { class: "linha1" }, icone(d.icone, 52), el("div", {}, el("div", { class: "cond" }, d.condicao), el("div", { class: "estab" }, d.tempo))),
       el("div", { class: "numeros" },
-        el("div", {}, el("span", {}, "Temperatura máxima"), el("strong", {}, grau(d.temp.max)), el("small", {}, ` às ${d.temp.h_max}`)),
-        el("div", {}, el("span", {}, "Temperatura mínima"), el("strong", {}, grau(d.temp.min)), el("small", {}, ` às ${d.temp.h_min}`)),
-        el("div", {}, el("span", {}, "Madrugada (0h–6h)"), el("strong", {}, grau(d.tmin_noite)), el("small", {}, d.noite_quente ? " quente" : d.noite_fresca ? " fresca" : " amena")),
-        el("div", {}, el("span", {}, "Chuva, mm (NOAA/GFS)"), el("strong", {}, `${f1(cE)} mm`)),
-        el("div", {}, el("span", {}, "Chance de ≥10 mm (NOAA/GFS)"), el("strong", {}, pct(pE))),
-        el("div", {}, el("span", {}, "Vento e rajadas previstas"), el("strong", {}, `${f0(d.vento_max)} / ${f0(d.rajada_max)} km/h`), el("small", {}, ` máximas · direção ${d.vento_dir}`)),
+        el("div", {}, el("span", {}, "Temperatura máxima"), el("strong", {}, grau(d.temp.max)), el("small", {}, "PoaClima")),
+        el("div", {}, el("span", {}, "Temperatura mínima"), el("strong", {}, grau(d.temp.min)), el("small", {}, "PoaClima")),
+        el("div", {}, el("span", {}, "Madrugada (0h–6h)"), el("strong", {}, grau(d.tmin_noite)),
+          el("small", {}, `Open-Meteo · ${d.noite_quente ? "quente" : d.noite_fresca ? "fresca" : "amena"}`)),
+        el("div", {}, el("span", {}, "Chuva prevista"), el("strong", {}, `${f1(p.chuva_mm)} mm`), el("small", {}, "PoaClima")),
+        el("div", {}, el("span", {}, "Umidade máxima / mínima"), el("strong", {}, `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`), el("small", {}, "PoaClima")),
+        el("div", {}, el("span", {}, "Vento previsto"), el("strong", {}, `${f0(p.vento_kmh)} km/h`), el("small", {}, `direção ${p.vento_dir} · PoaClima`)),
       ),
     );
   }
@@ -391,8 +415,7 @@
   // ------------------------------------------------------------------ cartões dos dias
   function renderDias() {
     trocar($("dias"), ...DIAS.map((d, i) => {
-      const fx = faixa(d.sensacao.max), [cE, cG] = chuvaDia(d), chance = Math.max(...chanceDia(d).map((x) => x ?? 0));
-      const chuva = Math.abs(cE - cG) < 0.05 ? `${f1(cE)} mm` : `${f1(Math.min(cE, cG))}–${f1(Math.max(cE, cG))} mm`;
+      const fx = faixa(d.sensacao.max), chuva = chuvaDia(d), p = d.poaclima;
       const uvMax = d.uv ? apresentarUV(d.uv.max) : null, uvNivel = d.uv ? nivelUV(d.uv.max) : null;
       return el("button", {
         class: "dia", type: "button", "aria-pressed": String(i === selecionado),
@@ -401,11 +424,11 @@
       },
         el("div", { class: "cab" }, el("b", {}, rotuloDia(d)), el("span", {}, ddmm(d.data))),
         el("span", { class: "chip", style: `background:${d.cor_bg};color:${d.cor_fg}` }, el("i", {}, String(d.nivel)), d.nome),
-        el("div", { class: "sens" }, el("span", {}, "Sensação máxima"),
+        el("div", { class: "sens", title: "Sensação térmica calculada pelo Open-Meteo" }, el("span", {}, "Sensação máxima"),
           el("div", {}, el("i", { class: "pt", style: `background:${fx.cor}` }), el("strong", {}, grau(d.sensacao.max)))),
-        el("div", { class: "cond" }, icone(d.codigo, 28), d.condicao),
-        el("div", { class: "info" }, `Temp. ${grau(d.temp.max)} / ${grau(d.temp.min)}`, el("br"),
-          `Chuva ${chuva}${chance >= 10 ? ` · até ${f0(chance)}% ≥10 mm` : ""}`),
+        el("div", { class: "cond" }, icone(d.icone, 28), d.condicao),
+        el("div", { class: "info", title: "Previsão diária do PoaClima / Catavento" }, `Temp. ${grau(d.temp.max)} / ${grau(d.temp.min)}`, el("br"),
+          `Chuva ${f1(chuva)} mm`, el("br"), `Vento ${f0(p.vento_kmh)} km/h · ${p.vento_dir}`),
         uvMax != null && uvNivel ? el("div", { class: "uv-dia", style: `background:${uvNivel.cor_bg};color:${uvNivel.cor_fg}` }, `UV máx. ${uvMax} · ${uvNivel.nome}`) : null,
         d.noite_quente ? el("span", { class: "marca-noite" }, "Madrugada quente") : null,
       );
@@ -437,10 +460,10 @@
         return;
       }
       const quadro = (centroX, centroY) => {
-        const w = 58, h = 18, q = fundo.append("g").attr("class", "mini-quadro").attr("data-modelo", "NOAA/GFS");
+        const w = 58, h = 18, q = fundo.append("g").attr("class", "mini-quadro").attr("data-modelo", "PoaClima");
         q.append("rect").attr("x", centroX - w / 2).attr("y", centroY - h / 2).attr("width", w).attr("height", h).attr("rx", 5)
           .style("fill", "var(--superficie)").style("stroke", "var(--borda)");
-        texto(q, centroX, centroY, d.modelos.gfs.chuva_mm == null ? "—" : `${f1(d.modelos.gfs.chuva_mm)} mm`,
+        texto(q, centroX, centroY, d.poaclima.chuva_mm == null ? "—" : `${f1(d.poaclima.chuva_mm)} mm`,
           { ancora: "middle", cor: "var(--tinta2)", tam: 10, peso: 650 });
       };
       if (larguraDia < 115) {
@@ -502,7 +525,7 @@
       el("i", { class: "k-linha", style: `background:${CORES_MODELOS[k]};height:3px` }), r)));
     const alternar = (k) => () => { c[k] = !c[k]; desenharGraficos(); };
     trocar($("legenda-calor"),
-      botaoSerie("UTCI", el("i", { class: "k-linha", style: "background:var(--tinta);height:3px" }), c.sensacao, alternar("sensacao")),
+      botaoSerie("Sensação térmica", el("i", { class: "k-linha", style: "background:var(--tinta);height:3px" }), c.sensacao, alternar("sensacao")),
       botaoSerie("Temperatura do ar", el("i", { class: "k-linha k-tracejada", style: "color:var(--tinta2)" }), c.temp, alternar("temp")),
       c.sensacao && c.modelos.ecmwf && c.modelos.gfs ? botaoSerie("Diferença entre os modelos", el("i", { class: "k-caixa", style: "background:var(--tinta);opacity:.18" }), c.diferenca, alternar("diferenca")) : null,
       botaoSerie("Pico de cada dia", el("i", { class: "k-caixa", style: "background:var(--tinta);border-radius:50%;width:10px;height:10px" }), c.picos, alternar("picos")),
@@ -517,7 +540,7 @@
     div.replaceChildren();
     const nomesAtivos = ativos.map((k) => MODELOS[k]).join(", ") || "nenhum modelo selecionado";
     const svg = d3.select(div).append("svg").attr("width", w).attr("height", h).attr("role", "img")
-      .attr("aria-label", `UTCI e temperatura do ar hora a hora: ${nomesAtivos}`);
+      .attr("aria-label", `Sensação térmica e temperatura do ar hora a hora: ${nomesAtivos}`);
     const x = d3.scaleUtc().domain(dominioX).range([m.l, w - m.r]);
     const minM = H.sensacao_ecmwf.map((v, i) => Math.min(v, H.sensacao_gfs[i])), maxM = H.sensacao_ecmwf.map((v, i) => Math.max(v, H.sensacao_gfs[i]));
     // Eixo estável: considera todas as séries, mesmo as escondidas.
@@ -552,7 +575,7 @@
     ativos.forEach((mod) => { if (c.sensacao) linha(SERIE.sensacao[mod], CORES_MODELOS[mod], mod === "consenso" ? 3.3 : 2.7, false, `serie-utci serie-${mod}`); });
     if (!ativos.length || (!c.sensacao && !c.temp)) {
       texto(plot, (m.l + w - m.r) / 2, (m.t + h - m.b) / 2,
-        !ativos.length ? "Escolha pelo menos um modelo acima" : "Ative UTCI ou temperatura do ar", { ancora: "middle", cor: "var(--tinta2)", tam: 14, peso: 600 });
+        !ativos.length ? "Escolha pelo menos um modelo acima" : "Ative sensação térmica ou temperatura do ar", { ancora: "middle", cor: "var(--tinta2)", tam: 14, peso: 600 });
     }
     if (c.sensacao && c.picos) ativos.forEach((mod, imodelo) => {
       const U = SERIE.sensacao[mod];
@@ -585,7 +608,7 @@
         if (c.sensacao) {
           const v = SERIE.sensacao[mod][i];
           g.append("circle").attr("cx", px).attr("cy", y(v)).attr("r", 4).style("fill", cor).style("stroke", "var(--superficie)").style("stroke-width", 2);
-          linhas.push({ valor: grauC(v), rotulo: `UTCI · ${MODELOS[mod]} · ${faixa(v).nome}`, cor });
+          linhas.push({ valor: grauC(v), rotulo: `Sensação térmica · ${MODELOS[mod]} · ${faixa(v).nome}`, cor });
         }
         if (c.temp) {
           const v = SERIE.temp[mod][i], corTemp = CORES_TEMP[mod];
@@ -654,8 +677,13 @@
     trocar($("modelo-tec"), ...[["ecmwf", "ECMWF/IFS"], ["gfs", "NOAA/GFS"]].map(([k, r]) =>
       el("button", { type: "button", "aria-pressed": String(k === modeloTec), onclick: () => { modeloTec = k; renderTecnico(); } }, r)));
     const linhas = [
-      ["Condição", (d, x) => x.condicao],
-      ["Estabilidade", (d, x) => el("span", { class: "pilula", style: `background:${x.estabilidade.bg};color:${x.estabilidade.fg}` }, x.estabilidade.texto)],
+      ["PoaClima · condição", (d) => d.condicao],
+      ["PoaClima · temperatura máx. / mín.", (d) => `${grau(d.temp.max)} / ${grau(d.temp.min)}`],
+      ["PoaClima · chuva", (d) => `${f1(d.poaclima.chuva_mm)} mm`],
+      ["PoaClima · umidade máx. / mín.", (d) => `${f0(d.poaclima.umidade_max_pct)}% / ${f0(d.poaclima.umidade_min_pct)}%`],
+      ["PoaClima · vento / direção", (d) => `${f0(d.poaclima.vento_kmh)} km/h · ${d.poaclima.vento_dir}`],
+      ["Condição do modelo selecionado", (d, x) => x.condicao],
+      ["Estabilidade do modelo selecionado", (d, x) => el("span", { class: "pilula", style: `background:${x.estabilidade.bg};color:${x.estabilidade.fg}` }, x.estabilidade.texto)],
       ["Sensação térmica (UTCI)", (d, x) => minMax(x.utci, corBio)],
       ["Temperatura do ar", (d, x) => minMax(x.t2m, corBio)],
       ["Chuva NOAA/GFS, centro / máx. vizinhança", (d) => `${f1(d.modelos.gfs.chuva_mm)} / ${f1(d.modelos.gfs.chuva_max_grade_mm)} mm`],
