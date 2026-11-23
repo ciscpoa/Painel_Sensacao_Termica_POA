@@ -1,7 +1,9 @@
 """Gera os dados do painel público do Protocolo de Calor de Porto Alegre.
 
-Baixa as previsões (ECMWF/IFS e NOAA/GFS, via Open-Meteo), calcula os índices térmicos, aplica o
-protocolo (gatilhos diários + persistência + rampa + acúmulo + rescaldo) e grava:
+Coleta a previsão diária pública do PoaClima/Catavento e as séries ECMWF/IFS e NOAA/GFS via
+Open-Meteo. O PoaClima alimenta os cartões de tempo, temperatura, chuva, umidade e vento; o
+Open-Meteo continua alimentando a sensação térmica, o IBUTG e todos os gatilhos do protocolo
+(gatilhos diários + persistência + rampa + acúmulo + rescaldo). Grava:
   docs/dados/previsao.js    lido pela página (window.PREVISAO)
   docs/dados/previsao.json  os mesmos dados, para reutilização
 No GitHub Actions (variável GITHUB_ACTIONS), também carimba a versão nos endereços dos scripts de
@@ -22,7 +24,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-from calor import previsao, protocolo
+from calor import poaclima, previsao, protocolo
 
 AQUI = Path(__file__).resolve().parent
 SAIDA = AQUI / "docs" / "dados"
@@ -103,6 +105,13 @@ def main() -> None:
     todos_dias = list(dict.fromkeys(ec["date"]))          # inclui os dias anteriores (contexto das regras)
     dias = [d for d in todos_dias if d >= agora.date()]  # o painel mostra de hoje em diante
 
+    print("Coletando a previsão diária do PoaClima/Catavento...")
+    clima_poa = poaclima.coletar_previsao(hoje=agora.date())
+    poa_por_data = {x["data"]: x for x in clima_poa["dias"]}
+    faltantes = [d.isoformat() for d in dias if d.isoformat() not in poa_por_data]
+    if faltantes:
+        raise RuntimeError(f"PoaClima sem previsão para os dias exibidos pelo painel: {', '.join(faltantes)}")
+
     try:
         cubos = previsao.baixar_ensemble(om, pontos)
         nmep = {k: previsao.nmep_diario(c["cubo"], c["datas"], dias) for k, c in cubos.items()}
@@ -120,10 +129,10 @@ def main() -> None:
     for d, diag in zip(dias, diagnosticos):
         dia_ec, dia_gf, dia_m = ec[ec["date"] == d], gf[gf["date"] == d], mme[mme["date"] == d]
         r_ec, r_gf = resumo_modelo(dia_ec, nmep["ecmwf"].get(d)), resumo_modelo(dia_gf, nmep["gfs"].get(d))
-        codigo, condicao = r_gf["codigo"], r_gf["condicao"]
         seta, direcao = protocolo.vento_predominante(pd.concat([dia_ec["wind_kmh"], dia_gf["wind_kmh"]]),
                                                      pd.concat([dia_ec["wind_dir"], dia_gf["wind_dir"]]))
         nivel = diag["nivel"]
+        poa = poa_por_data[d.isoformat()]
         saida_dias.append({
             "data": d.isoformat(), "dia_semana": DIAS_SEMANA[d.weekday()],
             "nivel": nivel, **{k: protocolo.NIVEIS[nivel][k] for k in ("nome", "cor_fg", "cor_bg", "acao", "publico")},
@@ -133,12 +142,18 @@ def main() -> None:
             "pico_ibutg": diag["pico_ibutg"],
             "horas_utci_28": diag["horas_n2"], "horas_utci_32": diag["horas_32"], "horas_utci_34": diag["horas_n3"],
             "horas_utci_38": diag["horas_n4"], "horas_utci_48": diag["horas_n5"],
-            "temp": extremos(dia_m, "T2M_MME"), "sensacao": extremos(dia_m, "UTCI_MME"),
-            "uv": resumo_uv(dia_gf),
-            "codigo": codigo, "condicao": condicao,
-            "tempo": r_gf["estabilidade"]["texto"],
-            "vento_max": max(r_ec["vento_max"], r_gf["vento_max"]), "rajada_max": max(r_ec["rajada_max"], r_gf["rajada_max"]),
-            "vento_dir": direcao, "vento_seta": seta,
+            # Previsão pública diária: PoaClima. Os extremos do consenso ficam
+            # separados para rastreabilidade e não alteram nenhum gatilho.
+            "temp": {"min": poa["temp_min_c"], "h_min": None, "max": poa["temp_max_c"], "h_max": None},
+            "temp_openmeteo": extremos(dia_m, "T2M_MME"),
+            "sensacao": extremos(dia_m, "UTCI_MME"), "uv": resumo_uv(dia_gf),
+            "clima": poa["clima"], "icone": poa["icone"], "condicao": poa["condicao"],
+            "tempo": "PoaClima · Catavento",
+            "vento_max": poa["vento_kmh"], "vento_dir": poa["vento_dir"],
+            "vento_openmeteo": {"max": max(r_ec["vento_max"], r_gf["vento_max"]),
+                                "rajada_max": max(r_ec["rajada_max"], r_gf["rajada_max"]),
+                                "dir": direcao, "seta": seta},
+            "poaclima": poa,
             "modelos": {"ecmwf": r_ec, "gfs": r_gf},
         })
 
@@ -159,6 +174,13 @@ def main() -> None:
         "gerado_em": agora.isoformat(timespec="minutes"), "local": "Porto Alegre (RS)",
         "centro": [previsao.LAT_CENTRAL, previsao.LON_CENTRAL], "raio_km": previsao.RAIO_KM, "pontos": len(pontos),
         "ensemble": ensemble_ok, "niveis": protocolo.NIVEIS, "niveis_uv": protocolo.NIVEIS_UV,
+        "fontes": {
+            "previsao_diaria": poaclima.FONTE,
+            "sensacao_alertas_e_series": "ECMWF/IFS e NOAA/GFS, via Open-Meteo",
+            "uv": "NOAA/GFS, via Open-Meteo",
+        },
+        "poaclima": {"url": poaclima.URL_PAINEL, "atualizado_em": clima_poa["atualizado_em"],
+                     "coletado_em": clima_poa["coletado_em"]},
         "uv_fonte": "NOAA/GFS, via Open-Meteo", "dias": saida_dias, "dias_anteriores": anteriores,
         "horario": {k: list(v) for k, v in horario.items()},
     })
@@ -173,8 +195,8 @@ def main() -> None:
     for x in anteriores:
         print(f"  (anterior) {x['data']}  N{x['nivel']}  | {x['gatilho']}")
     for x in saida_dias:
-        print(f"  {x['dia_semana']:<8} {x['data']}  N{x['nivel']} {x['nome']:<11} Tmáx {x['temp']['max']:4.1f}  "
-              f"UTCI máx {x['sensacao']['max']:4.1f}  chuva NOAA/GFS {x['modelos']['gfs']['chuva_mm']:4.1f} mm  | {x['gatilho']}")
+        print(f"  {x['dia_semana']:<8} {x['data']}  N{x['nivel']} {x['nome']:<11} Tmáx PoaClima {x['temp']['max']:4.1f}  "
+              f"sensação máx {x['sensacao']['max']:4.1f}  chuva PoaClima {x['poaclima']['chuva_mm']:4.1f} mm  | {x['gatilho']}")
 
 
 if __name__ == "__main__":

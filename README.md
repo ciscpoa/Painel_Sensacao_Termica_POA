@@ -1,18 +1,36 @@
 # Protocolo de Calor — Porto Alegre
 
-Painel público com a previsão do tempo e os alertas de calor para os próximos 5 dias, pelos gatilhos
-do Protocolo de Calor de Porto Alegre (Temporada 2026/2027). A página fica em `docs/` e é publicada
-pelo GitHub Pages. Uma automação (GitHub Actions) refaz a previsão a cada 3 horas.
+Painel público com a previsão diária do PoaClima/Catavento e os alertas de calor para os próximos
+5 dias, pelos gatilhos do Protocolo de Calor de Porto Alegre (Temporada 2026/2027). A página fica
+em `docs/` e é publicada pelo GitHub Pages. Uma automação (GitHub Actions) refaz a coleta a cada
+3 horas.
 
 ## O que o painel mostra
 
-- **Nível de alerta do dia** (1 Normalidade, 2 Atenção, 3 Alerta, 4 Perigo, 5 Emergência), com o motivo,
-  o horário mais crítico e o que fazer, em linguagem simples.
-- **Próximos 5 dias:** nível, condição do tempo, máxima e mínima, sensação térmica e chuva.
+- **Nível de alerta do dia** (1 a 5), com o motivo, o horário mais crítico e o que fazer, em
+  linguagem simples. O alerta principal e a imagem compartilhável mostram somente “Nível X”.
+- **Sensação térmica agora e máxima do dia**, esta última com o respectivo horário.
+- **Próximos 5 dias:** nível, condição do tempo, máxima e mínima, sensação térmica, chuva e vento.
+- **Condições do dia:** tempo, temperaturas, chuva, umidade e vento do PoaClima; madrugada pelo
+  Open-Meteo, pois ela participa das regras do protocolo.
 - **Hora a hora:** sensação térmica (UTCI) e temperatura, com as faixas do protocolo e a diferença
   entre os modelos; chuva por hora.
-- **Detalhes técnicos:** ECMWF × GFS, UTCI, IBUTG (escala ocupacional), chuva,
+- **Detalhes técnicos:** valores diários do PoaClima e comparação ECMWF × GFS, UTCI, IBUTG, chuva,
   probabilidade de chuva forte na vizinhança (NMEP), vento e gatilho.
+
+## Fontes e separação dos cálculos
+
+- **PoaClima / Catavento Meteorologia:** condição do tempo e respectivo ícone, temperaturas máxima
+  e mínima, chuva diária, umidade máxima/mínima, velocidade e direção do vento. São os dados dos
+  cartões públicos e dos totais diários sobre o gráfico de chuva.
+- **Open-Meteo (ECMWF/IFS e NOAA/GFS):** sensação térmica (UTCI), IBUTG, madrugada, séries horárias,
+  índice UV e todos os gatilhos dos alertas. A previsão do PoaClima não entra no cálculo dos níveis.
+
+A coleta do PoaClima está em `calor/poaclima.py`. Ela reproduz no GitHub Actions a chamada JSON
+pública usada pela aba “Previsão do tempo” do aplicativo, com o cabeçalho `x-timezone`, três
+tentativas e validação de esquema, datas e valores. Não exige Selenium nem uma requisição do
+navegador de quem abre o painel. Se a fonte falhar ou não cobrir os cinco dias, a geração é
+interrompida e a publicação anterior permanece no ar, em vez de misturar fontes sem aviso.
 
 ## Página
 
@@ -73,7 +91,8 @@ Depois, abra `docs/index.html` no navegador (funciona sem servidor).
 | `calor/indices.py` | Geometria solar, Tmrt (ERA5-HEAT), UTCI e IBUTG |
 | `calor/protocolo.py` | Gatilhos diários, rampa, acúmulo, rescaldo, estabilidade do tempo e textos para o público |
 | `calor/previsao.py` | Download (Open-Meteo), vizinhança de 55 km e probabilidade de chuva (NMEP) |
-| `gerar_painel.py` | Junta tudo e grava `docs/dados/previsao.js` e `previsao.json` |
+| `calor/poaclima.py` | Coleta, rótulos e validação da previsão diária do PoaClima/Catavento |
+| `gerar_painel.py` | Junta as duas fontes, preserva os alertas e grava `docs/dados/previsao.js` e `previsao.json` |
 | `docs/` | Página do painel (HTML + D3, sem servidor) |
 | `.github/workflows/atualizar_painel.yml` | Atualização automática a cada 3 horas |
 
@@ -95,5 +114,7 @@ Depois, abra `docs/index.html` no navegador (funciona sem servidor).
 
 ## Dados
 
-Previsões ECMWF IFS 0,25° e NOAA GFS (determinísticas e ensembles), via [Open-Meteo](https://open-meteo.com/)
-(CC BY 4.0). O painel é informativo e não substitui os avisos oficiais da Defesa Civil e da Saúde.
+Previsão diária do [PoaClima](https://prefeitura.poa.br/poaclima/) / Catavento Meteorologia e
+previsões ECMWF IFS 0,25° e NOAA GFS (determinísticas e ensembles), via
+[Open-Meteo](https://open-meteo.com/) (CC BY 4.0). O painel é informativo e não substitui os avisos
+oficiais da Defesa Civil e da Saúde.
