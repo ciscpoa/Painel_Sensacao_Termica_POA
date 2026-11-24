@@ -361,8 +361,8 @@
     const grupos = FAIXAS.map((f) => ({ f, periodos: segmentosFaixa(d, f) })).filter((g) => g.periodos.length)
       .sort((a, b) => a.f.de - b.f.de);
     trocar($("sensacao"),
-      el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica agora" : "Sensação térmica máxima",
-        el("small", {}, ehAtual ? "em Porto Alegre" : "pico previsto para o dia selecionado")),
+      el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica atual" : "Sensação térmica máxima",
+        el("small", {}, ehAtual ? "" : "pico previsto para o dia selecionado")),
       el("div", { class: "valor" }, el("strong", {}, grau(valor)),
         el("span", { class: "pilula-faixa", style: `background:${fx.cor};color:${textoFaixa(fx)}` }, fx.nome),
         el("span", { class: "hora" }, `às ${hora}`)),
