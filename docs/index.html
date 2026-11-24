@@ -174,19 +174,20 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .regua .ticks { position: relative; height: 34px; font-size: 10.5px; color: var(--muda); white-space: nowrap; }
 .regua .ticks span { position: absolute; transform: translateX(-50%); }
 .rotulo-grupo { margin: 16px 0 6px; color: var(--tinta2); font-size: 12px; font-weight: 650; letter-spacing: 0.035em; text-transform: uppercase; }
-.horas { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
-.horas > div { min-width: 0; min-height: 108px; padding: 9px 7px; border: 0; border-radius: 10px; display: flex; flex-direction: column; }
-.lista-periodos { list-style: none; padding: 0; margin: 4px 0 0; color: inherit; font-size: 10px; line-height: 1.35; opacity: 0.86; }
-.lista-periodos li { position: relative; padding-left: 10px; }
-.lista-periodos li + li { margin-top: 2px; }
-.lista-periodos li::before { content: ""; position: absolute; left: 0; top: 0.45em; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.horas { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.horas > div { min-width: 0; min-height: 120px; padding: 12px 10px; border: 0; border-radius: 10px; display: flex; flex-direction: column; }
+.lista-periodos { list-style: none; padding: 0; margin: 6px 0 0; color: inherit; font-size: clamp(11.5px, 0.3vw + 10px, 13.5px); line-height: 1.4; opacity: 0.90; }
+.lista-periodos li { position: relative; padding-left: 12px; }
+.lista-periodos li + li { margin-top: 3px; }
+.lista-periodos li::before { content: ""; position: absolute; left: 0; top: 0.45em; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .horas > div + div { border-left: 0; }
-.horas > div:first-child { padding-left: 7px; }
-.horas b { display: block; font-size: 20px; line-height: 1.2; }
-.resumo-faixa { display: flex; align-items: baseline; gap: 4px; }
+.horas > div:first-child { padding-left: 10px; }
+.horas b { display: block; font-size: clamp(22px, 1.2vw + 14px, 28px); line-height: 1.15; }
+.resumo-faixa { display: flex; align-items: baseline; gap: 5px; }
 .resumo-faixa b { flex: none; }
-.texto-resumo { flex: 1; min-width: 0; font-size: 10px !important; line-height: 1.2 !important; }
-.rotulo-estresse { display: block; margin-top: auto; padding-top: 8px; font-size: 10px; font-weight: 750; line-height: 1.25; }
+.horas .texto-resumo { flex: 1; min-width: 0; font-size: clamp(12px, 0.3vw + 10px, 13.5px) !important; line-height: 1.2 !important; }
+.horas .rotulo-estresse { display: block; margin-top: auto; padding-top: 10px; font-size: clamp(11.5px, 0.3vw + 10px, 13.5px); font-weight: 750; line-height: 1.25; }
+.horas span { font-size: clamp(11.5px, 0.3vw + 10px, 13.5px); line-height: 1.3; display: flex; align-items: center; gap: 4px; }
 .horas span { font-size: 11px; line-height: 1.3; display: flex; align-items: center; gap: 4px; }
 .ponto-faixa { width: 8px; height: 8px; flex: none; display: inline-block; border-radius: 2px; }
 .sensacao .explica { font-size: 13px; color: var(--tinta2); margin: 12px 0 0; }
@@ -476,7 +477,7 @@ footer .emergencia { font-size: 16px; }
     <img class="logos-rodape" src="img/dvs-cisc.png" width="3972" height="453" alt="CISC, Diretoria de Vigilância em Saúde, Sistema Único de Saúde e Prefeitura de Porto Alegre – Secretaria de Saúde">
     <div class="creditos">
       <p><strong>Painel de Calor de Porto Alegre</strong>, desenvolvido pelo CISC – Centro de Informação em Saúde e Clima.</p>
-      <p>Previsão diária: <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima</a> / Catavento Meteorologia. Sensação térmica, séries horárias, índice UV e alertas: modelos ECMWF/IFS e NOAA/GFS <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> (CC BY 4.0). Atualização a cada 3 horas.</p>
+      <p>Previsão diária: <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima</a> / Catavento Meteorologia. Sensação térmica, séries horárias, índice UV e alertas: modelos ECMWF/IFS e NOAA/GFS <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> (CC BY 4.0). Atualização a cada 3 .</p>
       <p class="emergencia"><strong>Emergência:</strong> SAMU <strong>192</strong> · Defesa Civil <strong>199</strong> · Bombeiros <strong>193</strong></p>
     </div>
   </div>
