@@ -385,15 +385,51 @@
 
   function renderTempo() {
     const d = DIAS[selecionado], p = d.poaclima;
+    const rajadasDia = H.rajadas
+      ? H.rajadas.filter((v, i) => v != null && H.tempo[i].startsWith(d.data))
+      : [];
+    const rajada = p?.rajada_kmh
+      ?? (rajadasDia.length ? Math.max(...rajadasDia) : (d.modelos?.gfs?.rajada_max ?? d.modelos?.ecmwf?.rajada_max ?? null));
+
     trocar($("tempo-dia"),
-      el("h2", { class: "rotulo" }, "Previsão do Tempo", el("small", {}, "PoaClima")),
-      el("div", { class: "linha1" }, icone(d.icone, 52), el("div", {}, el("div", { class: "cond" }, d.condicao), el("div", { class: "estab" }, d.tempo))),
+      el("h2", { class: "rotulo" }, "Previsão do Tempo"),
+      el("div", { class: "linha1" },
+        icone(d.icone, 52),
+        el("div", {},
+          el("div", { class: "cond" }, d.condicao),
+          el("div", { class: "estab" }, d.tempo),
+        ),
+      ),
       el("div", { class: "numeros" },
-        el("div", {}, el("span", {}, "Temperatura máxima"), el("strong", {}, grau(d.temp.max)), el("small", {})),
-        el("div", {}, el("span", {}, "Temperatura mínima"), el("strong", {}, grau(d.temp.min)), el("small", {})),
-        el("div", {}, el("span", {}, "Chuva prevista"), el("strong", {}, `${f1(p.chuva_mm)} mm`), el("small", {})),
-        el("div", {}, el("span", {}, "Umidade máxima / mínima"), el("strong", {}, `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`), el("small", {})),
-        el("div", {}, el("span", {}, "Vento previsto"), el("strong", {}, `${f0(p.vento_kmh)} km/h`), el("small", {}, `direção ${p.vento_dir}`)),
+        // Linha 1: Temperaturas lado a lado
+        el("div", {},
+          el("span", {}, "Temperatura máxima"),
+          el("strong", {}, grau(d.temp?.max)),
+        ),
+        el("div", {},
+          el("span", {}, "Temperatura mínima"),
+          el("strong", {}, grau(d.temp?.min)),
+        ),
+        // Linha 2: Chuva e Umidade lado a lado
+        el("div", {},
+          el("span", {}, "Chuva prevista"),
+          el("strong", {}, p?.chuva_mm == null ? "—" : `${f1(p.chuva_mm)} mm`),
+        ),
+        el("div", {},
+          el("span", {}, "Umidade máxima / mínima"),
+          el("strong", {}, p?.umidade_max_pct == null || p?.umidade_min_pct == null ? "—" : `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`),
+        ),
+        // Linha 3: Vento e Rajadas lado a lado
+        el("div", {},
+          el("span", {}, "Vento previsto"),
+          el("strong", {}, p?.vento_kmh == null ? "—" : `${f0(p.vento_kmh)} km/h`),
+          p?.vento_dir ? el("small", {}, `direção ${p.vento_dir}`) : null,
+        ),
+        el("div", {},
+          el("span", {}, "Rajadas de vento"),
+          el("strong", {}, rajada == null ? "—" : `${f0(rajada)} km/h`),
+          el("small", {}, "máx. prevista · Open-Meteo"),
+        ),
       ),
     );
   }
