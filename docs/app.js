@@ -502,24 +502,6 @@
       blocoInmet,
     );
   }
-    const maximo = apresentarUV(info.max), iAtual = indiceHoraAtual(d.data);
-    const uvAtual = iAtual >= 0 && H.uv ? apresentarUV(H.uv[iAtual]) : null;
-    const ehAtual = uvAtual != null, valor = ehAtual ? uvAtual : maximo;
-    const fx = ehAtual ? nivelUV(H.uv[iAtual]) : nivelUV(info.max);
-    const hora = ehAtual ? H.tempo[iAtual].slice(11, 16) : info.h_max;
-    trocar(alvo,
-      el("h2", { class: "rotulo" }, "Índice ultravioleta (UV)", el("small", {}, ehAtual ? "valor da hora mais recente" : "máximo previsto no dia")),
-      el("div", { class: "valor-uv" }, el("strong", { "aria-label": `${ehAtual ? "Índice UV atual" : "Índice UV máximo"} ${valor}`, style: `color:${fx.cor_fg}` }, String(valor)),
-        el("span", { class: "pilula-faixa", style: `background:${fx.cor_bg};color:${fx.cor_fg}` }, fx.nome),
-        el("span", { class: "hora" }, `às ${hora}`)),
-      ehAtual ? el("p", { class: "maximo-uv" }, `Máxima prevista hoje: UV ${maximo} · ${nivelUV(info.max).nome} às ${info.h_max}`) : null,
-      el("div", { class: "escala-uv", role: "img", "aria-label": `Escala UV: ${fx.nome}, valor ${valor}` }, ...niveisUV.map((f) =>
-        el("span", { style: `--cor-uv:${f.cor_fg}`, title: f.nome, "aria-current": f.nome === fx.nome ? "true" : null }, `${f.min}${f.max == null ? "+" : `–${f.max}`}`))),
-      !ehAtual && info.max_ceu_limpo != null ? el("p", { class: "agora-uv" }, `Céu limpo: UV máx. ${apresentarUV(info.max_ceu_limpo)}`) : null,
-      el("p", { class: "cuidado-uv" }, fx.cuidado),
-      el("p", { class: "explica" }, "Referência: ", el("a", { href: "https://www.who.int/publications/i/item/9241590076", target: "_blank", rel: "noopener" }, "Global Solar UV Index — OMS")),
-    );
-  }
 
   // ------------------------------------------------------------------ cartões dos dias
   function renderDias() {
