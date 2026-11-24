@@ -42,7 +42,7 @@
     { de: 38, ate: 46, cor: "#dc2626", texto: "#fff", nome: "Estresse muito forte por calor", rotulo: "estresse muito forte por calor" },
     { de: 46, ate: 99, cor: "#6b21a8", texto: "#fff", nome: "Estresse extremo por calor", rotulo: "estresse extremo por calor" },
   ];
-  const faixa = (u) => FAIXAS.find((f) => u >= f.de && u < f.ate) || FAIXAS[4];
+  const faixa = (u) => FAIXAS.find((f) => u >= f.de && u < f.ate) || FAIXAS.find((f) => f.nome === "Sem estresse térmico");
   const rotuloFaixa = (f) => (f.de < -50 ? `${f.nome} (<${f.ate} °C)` : f.ate > 90 ? `${f.nome} (≥${f.de} °C)` : `${f.nome} (${f.de}–${f.ate} °C)`);
   function contrasteCor(a, b) {
     const lum = (hex) => {
@@ -324,8 +324,9 @@
     const segs = FAIXAS.map((f) => ({ ...f, a: Math.max(f.de, MIN), b: Math.min(f.ate, MAX) })).filter((s) => s.b > s.a);
     const barra = el("div", { class: "barra" }, ...segs.map((s) => el("span", { title: rotuloFaixa(s), style: `flex:${s.b - s.a};background:${s.cor}` })),
       el("i", { class: "marcador", style: `left:${pos(valor)}%` }));
-    const ticks = el("div", { class: "ticks" }, ...[0, 9, 26, 32, 38, 46].map((t) => el("span", {
-      style: `left:${pos(t)}%;top:${t === 32 ? "16px" : "3px"}` }, `${t}°C`)));
+    const marcas = FAIXAS.map((f) => f.de).filter((v) => v > MIN && v < MAX);
+    const ticks = el("div", { class: "ticks" }, ...marcas.map((t) => el("span", {
+    style: `left:${pos(t)}%;top:${t === 6 || t === 34 ? "16px" : "3px"}` }, `${t}°C`)));
     return el("div", { class: "regua", role: "img", "aria-label": `${atual ? "Sensação térmica atual" : "Sensação térmica máxima"} de ${f0(valor)} °C, faixa ${faixa(valor).nome}` }, barra, ticks);
   }
 
@@ -370,7 +371,9 @@
       el("div", { class: "rotulo-grupo" }, "Horas e períodos por faixa de estresse térmico"),
       el("div", { class: "horas", "aria-label": "Horas e períodos em cada faixa de estresse térmico" }, ...grupos.map(({ f, periodos }) => {
         const total = periodos.reduce((n, g) => n + g.fim - g.inicio + 1, 0), periodo = textoPeriodos(periodos);
-        const rotulo = f.de === 9 ? "Sem estresse térmico" : `Estresse térmico ${f.rotulo.replace(/^estresse\s+/, "")}`;
+        const rotulo = f.nome === "Sem estresse térmico"
+  ? "Sem estresse térmico"
+  : `Estresse térmico ${f.rotulo.replace(/^estresse\s+/, "")}`;
         return el("div", { class: "faixa-horas", style: `background:${f.cor};color:${textoFaixa(f)}`, title: `${total} h · ${f.rotulo} · ${periodo}` },
           el("div", { class: "resumo-faixa" }, el("b", {}, `${total} h`), el("span", { class: "texto-resumo" }, " do dia")),
           listaPeriodos(periodos),
