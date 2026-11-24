@@ -1,9 +1,11 @@
 """Gera os dados do painel público do Protocolo de Calor de Porto Alegre.
 
-Coleta a previsão diária pública do PoaClima/Catavento e as séries ECMWF/IFS e NOAA/GFS via
-Open-Meteo. O PoaClima alimenta os cartões de tempo, temperatura, chuva, umidade e vento; o
-Open-Meteo continua alimentando a sensação térmica, o IBUTG e todos os gatilhos do protocolo
-(gatilhos diários + persistência + rampa + acúmulo + rescaldo). Grava:
+Coleta a previsão diária pública do PoaClima/Catavento, as séries ECMWF/IFS e NOAA/GFS via
+Open-Meteo e os avisos meteorológicos do INMET para Porto Alegre. O PoaClima alimenta os cartões
+de tempo, temperatura, chuva, umidade e vento; o Open-Meteo continua alimentando a sensação
+térmica, o IBUTG, o índice UV e todos os gatilhos do protocolo (gatilhos diários + persistência +
+rampa + acúmulo + rescaldo); e o INMET alimenta os avisos meteorológicos exibidos abaixo do UV.
+Grava:
   docs/dados/previsao.js    lido pela página (window.PREVISAO)
   docs/dados/previsao.json  os mesmos dados, para reutilização
 No GitHub Actions (variável GITHUB_ACTIONS), também carimba a versão nos endereços dos scripts de
@@ -24,7 +26,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-from calor import poaclima, previsao, protocolo
+from calor import inmet, poaclima, previsao, protocolo
 
 AQUI = Path(__file__).resolve().parent
 SAIDA = AQUI / "docs" / "dados"
@@ -120,6 +122,19 @@ def main() -> None:
         print(f"Aviso: ensemble indisponível ({erro})", file=sys.stderr)
         nmep, ensemble_ok = {"ecmwf": {}, "gfs": {}}, False
 
+    print("Coletando avisos meteorológicos do INMET para Porto Alegre...")
+    try:
+        avisos_inmet = inmet.coletar_alertas_inmet()
+    except Exception as erro:  # falha do INMET não derruba a geração do painel de calor
+        print(f"Aviso: coleta do INMET indisponível ({erro})", file=sys.stderr)
+        avisos_inmet = {
+            "alertas": [],
+            "alertas_futuros": [],
+            "max_severidade": None,
+            "fonte": "api",
+            "consultado": False,
+        }
+
     diag_todos = protocolo.aplicar_regras_multidiarias([protocolo.avaliar_dia(mme[mme["date"] == d]) for d in todos_dias])
     anteriores = [{"data": d.isoformat(), "nivel": x["nivel"], "gatilho": x["gatilho"]}
                   for d, x in zip(todos_dias, diag_todos) if d < agora.date()]
@@ -178,9 +193,11 @@ def main() -> None:
             "previsao_diaria": poaclima.FONTE,
             "sensacao_alertas_e_series": "ECMWF/IFS e NOAA/GFS, via Open-Meteo",
             "uv": "NOAA/GFS, via Open-Meteo",
+            "avisos_meteorologicos": "INMET (apiprevmet3.inmet.gov.br)",
         },
         "poaclima": {"url": poaclima.URL_PAINEL, "atualizado_em": clima_poa["atualizado_em"],
                      "coletado_em": clima_poa["coletado_em"]},
+        "inmet": avisos_inmet,
         "uv_fonte": "NOAA/GFS, via Open-Meteo", "dias": saida_dias, "dias_anteriores": anteriores,
         "horario": {k: list(v) for k, v in horario.items()},
     })
@@ -192,6 +209,11 @@ def main() -> None:
         carimbar_versao(agora.strftime("%Y%m%d%H%M"))
 
     print(f"\nPrevisão gerada em {agora:%d/%m/%Y %H:%M} (ensemble: {'sim' if ensemble_ok else 'não'})")
+    if avisos_inmet.get("consultado"):
+        print(f"  INMET: {len(avisos_inmet.get('alertas', []))} aviso(s) hoje "
+              f"(máx: {avisos_inmet.get('max_severidade') or 'nenhum'})")
+    else:
+        print("  INMET: indisponível nesta atualização")
     for x in anteriores:
         print(f"  (anterior) {x['data']}  N{x['nivel']}  | {x['gatilho']}")
     for x in saida_dias:
