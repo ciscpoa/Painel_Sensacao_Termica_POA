@@ -472,7 +472,7 @@
         return;
       }
       const quadro = (centroX, centroY) => {
-        const w = 58, h = 18, q = fundo.append("g").attr("class", "mini-quadro").attr("data-modelo", "PoaClima");
+        const w = 58, h = 18, q = fundo.append("g").attr("class", "mini-quadro").attr("data-modelo");
         q.append("rect").attr("x", centroX - w / 2).attr("y", centroY - h / 2).attr("width", w).attr("height", h).attr("rx", 5)
           .style("fill", "var(--superficie)").style("stroke", "var(--borda)");
         texto(q, centroX, centroY, d.poaclima.chuva_mm == null ? "—" : `${f1(d.poaclima.chuva_mm)} mm`,
