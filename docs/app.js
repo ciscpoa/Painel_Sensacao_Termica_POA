@@ -385,6 +385,9 @@
 
   function renderTempo() {
     const d = DIAS[selecionado], p = d.poaclima;
+    const setas = { N: "↓", NE: "↙", L: "←", E: "←", SE: "↖", S: "↑", SO: "↗", SW: "↗", O: "→", W: "→", NO: "↘", NW: "↘" };
+    const dir = p?.vento_dir ? String(p.vento_dir).toUpperCase() : null;
+    const seta = dir && setas[dir] ? ` ${setas[dir]}` : "";
 
     trocar($("tempo-dia"),
       el("h2", { class: "rotulo" }, "Previsão do Tempo"),
@@ -396,30 +399,12 @@
         ),
       ),
       el("div", { class: "numeros" },
-        // Linha 1: Temperaturas lado a lado
-        el("div", {},
-          el("span", {}, "Temperatura máxima"),
-          el("strong", {}, grau(d.temp?.max)),
-        ),
-        el("div", {},
-          el("span", {}, "Temperatura mínima"),
-          el("strong", {}, grau(d.temp?.min)),
-        ),
-        // Linha 2: Chuva e Umidade lado a lado
-        el("div", {},
-          el("span", {}, "Chuva prevista"),
-          el("strong", {}, p?.chuva_mm == null ? "—" : `${f1(p.chuva_mm)} mm`),
-        ),
-        el("div", {},
-          el("span", {}, "Umidade máxima / mínima"),
-          el("strong", {}, p?.umidade_max_pct == null || p?.umidade_min_pct == null ? "—" : `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`),
-        ),
-        // Linha 3: Vento previsto centralizado
-        el("div", { class: "inteiro" },
-          el("span", {}, "Vento previsto"),
-          el("strong", {}, p?.vento_kmh == null ? "—" : `${f0(p.vento_kmh)} km/h`),
-          p?.vento_dir ? el("small", {}, `direção ${p.vento_dir}`) : null,
-        ),
+        el("div", {}, el("span", {}, "Temperatura máxima"), el("strong", {}, grau(d.temp?.max))),
+        el("div", {}, el("span", {}, "Temperatura mínima"), el("strong", {}, grau(d.temp?.min))),
+        el("div", {}, el("span", {}, "Chuva prevista"), el("strong", {}, p?.chuva_mm == null ? "—" : `${f1(p.chuva_mm)} mm`)),
+        el("div", {}, el("span", {}, "Umidade máxima / mínima"), el("strong", {}, p?.umidade_max_pct == null || p?.umidade_min_pct == null ? "—" : `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`)),
+        el("div", {}, el("span", {}, "Velocidade do vento"), el("strong", {}, p?.vento_kmh == null ? "—" : `${f0(p.vento_kmh)} km/h`)),
+        el("div", {}, el("span", {}, "Direção do vento"), el("strong", {}, dir ? `${dir}${seta}` : "—")),
       ),
     );
   }
