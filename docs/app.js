@@ -181,8 +181,15 @@
 
   // ------------------------------------------------------------------ compartilhar
   const URL_PAINEL = "https://ciscpoa.github.io/Painel_Sensacao_Termica_POA/";
-  const textoCompartilhamento = (d) => `${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Calor Nível ${d.nivel}. `
-    + `Sensação térmica máxima ${grau(d.sensacao.max)} às ${d.sensacao.h_max}. ${d.motivo} Acesse o painel: ${URL_PAINEL}`;
+  const textoCompartilhamento = (d) => {
+    const atual = sensacaoAgora(d);
+    const partes = [`${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Calor Nível ${d.nivel}.`];
+    if (atual) partes.push(`Sensação térmica atual: ${grau(atual.valor)} às ${atual.hora}.`);
+    partes.push(`Sensação térmica máxima: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}.`);
+    partes.push(d.motivo);
+    partes.push(`Acesse o painel: ${URL_PAINEL}`);
+    return partes.join(" ");
+  };
 
   function desenharTexto(ctx, texto, x, y, largura, alturaLinha, maxLinhas = 3, centralizar = false) {
     const posX = centralizar ? x + largura / 2 : x;
@@ -218,7 +225,7 @@
     ctx.font = '500 24px "Public Sans", sans-serif';
     ctx.fillText(`${rotuloDia(d)}, ${ddmmaaaa(d.data)}`, 1140, 58);
 
-    // Mais 20% sobre o selo anterior, mantendo texto e contorno na mesma caixa.
+
     const nivel = `CALOR NÍVEL ${d.nivel}`;
     ctx.font = '800 54.6px "Public Sans", sans-serif';
     const larguraNivel = ctx.measureText(nivel).width + 100;
@@ -233,7 +240,7 @@
 
     const atual = sensacaoAgora(d), temUV = d.uv && apresentarUV(d.uv.max) != null;
     const janela = d.janela_ini != null ? `${d.janela_ini}h às ${d.janela_fim}h` : "sem janela crítica ativa";
-    const sensacao = atual ? `Sensação térmica agora: ${grau(atual.valor)} (${atual.hora})`
+    const sensacao = atual ? `Sensação térmica atual: ${grau(atual.valor)} (${atual.hora})`
       : `Sensação térmica: previsão para ${rotuloDia(d).toLowerCase()}`;
     const uv = temUV ? `UV máx.: ${apresentarUV(d.uv.max)} · ${nivelUV(d.uv.max).nome}` : "UV máx.: indisponível nesta atualização";
     const linhasInfo = [
