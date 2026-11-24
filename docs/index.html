@@ -192,14 +192,15 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .sensacao .explica { font-size: 13px; color: var(--tinta2); margin: 12px 0 0; }
 
 .tempo-dia { order: 4; text-align: center; }
-.tempo-dia .linha1 { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; text-align: center; }
+.tempo-dia .linha1 { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; text-align: center; }
 .tempo-dia .cond { font-family: var(--f-titulo); font-size: 20px; font-weight: 650; line-height: 1.25; text-align: center; }
 .tempo-dia .estab { font-size: 13px; color: var(--tinta2); text-align: center; }
-.tempo-dia .numeros { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; text-align: center; }
-.numeros > div { padding: 13px 0; border-top: 1px solid var(--grade); min-width: 0; }
-.numeros span { display: block; font-size: 12px; line-height: 1.35; color: var(--tinta2); }
-.numeros strong { display: inline-block; margin-top: 2px; font-size: 20px; font-weight: 650; line-height: 1.2; }
-.numeros small { display: block; font-size: 12px; line-height: 1.35; color: var(--tinta2); }
+.tempo-dia .numeros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; text-align: center; }
+.numeros > div { padding: 16px 10px; border-top: 1px solid var(--grade); min-width: 0; }
+.numeros > div:nth-child(even) { border-left: 1px solid var(--grade); }
+.numeros span { display: block; font-size: 13px; line-height: 1.35; color: var(--tinta2); }
+.numeros strong { display: inline-block; margin-top: 4px; font-size: clamp(21px, 1.3vw + 16px, 30px); font-weight: 680; line-height: 1.15; }
+.numeros small { display: block; margin-top: 2px; font-size: 12px; line-height: 1.35; color: var(--tinta2); }
 
 .uv { order: 3; background: var(--uv-fundo); }
 .uv .valor-uv { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 14px 0 8px; }
