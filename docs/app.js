@@ -385,11 +385,6 @@
 
   function renderTempo() {
     const d = DIAS[selecionado], p = d.poaclima;
-    const rajadasDia = H.rajadas
-      ? H.rajadas.filter((v, i) => v != null && H.tempo[i].startsWith(d.data))
-      : [];
-    const rajada = p?.rajada_kmh
-      ?? (rajadasDia.length ? Math.max(...rajadasDia) : (d.modelos?.gfs?.rajada_max ?? d.modelos?.ecmwf?.rajada_max ?? null));
 
     trocar($("tempo-dia"),
       el("h2", { class: "rotulo" }, "Previsão do Tempo"),
@@ -419,16 +414,11 @@
           el("span", {}, "Umidade máxima / mínima"),
           el("strong", {}, p?.umidade_max_pct == null || p?.umidade_min_pct == null ? "—" : `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`),
         ),
-        // Linha 3: Vento e Rajadas lado a lado
-        el("div", {},
+        // Linha 3: Vento previsto centralizado
+        el("div", { class: "inteiro" },
           el("span", {}, "Vento previsto"),
           el("strong", {}, p?.vento_kmh == null ? "—" : `${f0(p.vento_kmh)} km/h`),
           p?.vento_dir ? el("small", {}, `direção ${p.vento_dir}`) : null,
-        ),
-        el("div", {},
-          el("span", {}, "Rajadas de vento"),
-          el("strong", {}, rajada == null ? "—" : `${f0(rajada)} km/h`),
-          el("small", {}, "máx. prevista · Open-Meteo"),
         ),
       ),
     );
