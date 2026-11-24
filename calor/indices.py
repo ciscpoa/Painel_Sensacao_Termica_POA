@@ -7,15 +7,15 @@ Fórmulas do código original do protocolo (Temporada 2026/2027), com estes ajus
   as fórmulas publicadas (ISO 7243).
 - PET e índice de calor da NOAA saíram: não são usados pelo protocolo.
 - Tmrt no esquema ERA5-HEAT completo (Di Napoli et al., 2020), o método declarado no código
-  (METODO_TMRT = 'ECMWF_ERA5'): fator de área projetada de Jendritzky com a elevação em graus e
-  radiação direta normal ao sol (I*). O código original usava γ²/4,92 e a direta horizontal.
+  (METODO_TMRT = 'ECMWF_ERA5'): fator de área projetada de Jendritzky com a elevação em graus,
+  radiação direta normal ao sol (I*) e correção da emissividade atmosférica por cobertura de nuvens
+  segundo Unsworth & Monteith (1975) sobre a curva de céu claro de Idso (1981).
 """
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 from pythermalcomfort.models import utci as utci_referencia
-
 
 
 def zenite_solar(tempos: pd.DatetimeIndex, lat: float, lon: float) -> np.ndarray:
@@ -53,22 +53,42 @@ def fator_area_projetada(zenite) -> np.ndarray:
     return np.where(h > 0, 0.308 * np.cos(np.radians(h * (0.998 - h ** 2 / 50000.0))), 0.08)
 
 
-def tmrt_era5(ta, rad_direta_normal, rad_difusa, rad_direta_horizontal, zenite, ur=50.0, albedo=0.20) -> np.ndarray:
+def tmrt_era5(
+    ta,
+    rad_direta_normal,
+    rad_difusa,
+    rad_direta_horizontal,
+    zenite,
+    ur=50.0,
+    albedo=0.20,
+    cobertura_nuvens=0.0,
+) -> np.ndarray:
     """Temperatura radiante média (°C), esquema ERA5-HEAT (Di Napoli et al., 2020).
 
     σ·Tmrt⁴ = 0,5·(L↓ + L↑) + (α/ε)·(fp·I* + 0,5·D + 0,5·albedo·G), com I* a radiação direta normal
-    ao sol, D a difusa e G a global horizontal. As ondas longas seguem o código original
-    (emissividade do céu a partir da pressão de vapor; superfície à temperatura do ar).
+    ao sol, D a difusa e G a global horizontal. Na onda longa descendente (L↓), aplica a correção por
+    cobertura de nuvens (0–100%) de Unsworth & Monteith (1975) sobre a emissividade de céu claro de
+    Idso (1981); a superfície emissora mantém a temperatura do ar.
     """
     sigma, a_p, eps_p = 5.670374e-8, 0.70, 0.97
     fp = fator_area_projetada(zenite)
-    i_norm = np.asarray(rad_direta_normal, dtype=np.float64)
-    i_dif = np.asarray(rad_difusa, dtype=np.float64)
-    i_glob = np.asarray(rad_direta_horizontal, dtype=np.float64) + i_dif
+    i_norm = np.maximum(0.0, np.asarray(rad_direta_normal, dtype=np.float64))
+    i_dif = np.maximum(0.0, np.asarray(rad_difusa, dtype=np.float64))
+    i_dir_hor = np.maximum(0.0, np.asarray(rad_direta_horizontal, dtype=np.float64))
+    i_glob = i_dir_hor + i_dif
     r_sw = a_p * (fp * i_norm + 0.5 * i_dif + 0.5 * albedo * i_glob)
+
     tk = np.asarray(ta, dtype=np.float64) + 273.15
     e_vap = es_hardy_its90(ta) * (np.asarray(ur, dtype=np.float64) / 100.0)
-    eps_ceu = np.clip(0.70 + 5.95e-5 * e_vap * np.exp(1500.0 / tk), 0.70, 0.99)
+    eps_claro = np.clip(0.70 + 5.95e-5 * e_vap * np.exp(1500.0 / tk), 0.70, 0.99)
+
+    if cobertura_nuvens is None:
+        c = 0.0
+    else:
+        c = np.clip(np.asarray(cobertura_nuvens, dtype=np.float64) / 100.0, 0.0, 1.0)
+        c = np.where(np.isfinite(c), c, 0.0)
+
+    eps_ceu = np.clip((1.0 - 0.84 * c) * eps_claro + 0.84 * c, 0.70, 0.99)
     r_lw = 0.5 * eps_p * (eps_ceu * sigma * tk ** 4 + sigma * tk ** 4)
     return ((r_sw + r_lw) / (eps_p * sigma)) ** 0.25 - 273.15
 
