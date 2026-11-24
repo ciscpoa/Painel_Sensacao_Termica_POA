@@ -28,7 +28,7 @@
     return d.data === AGORA.data ? "Hoje" : d.data === amanha ? "Amanhã" : d.dia_semana;
   };
 
-  // Categorias oficiais de estresse térmico da UTCI (Bröde et al., 2012).
+  // Categorias de estresse térmico da UTCI adaptados para Porto Alegre (Bröde et al., 2012).
   // São distintas dos níveis do Protocolo de Calor, cujas regras permanecem inalteradas.
   const FAIXAS = [
     { de: -99, ate: -40, cor: "#08306b", texto: "#fff", nome: "Frio extremo", rotulo: "estresse extremo por frio" },
