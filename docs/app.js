@@ -179,12 +179,12 @@
     aviso.textContent = `Atenção: esta previsão foi gerada há ${Math.round(horasDesde)} horas. A atualização automática pode ter falhado; confira também os avisos da Defesa Civil.`;
   }
 
-  // ------------------------------------------------------------------ compartilhar
+  // -------------------- compartilhamento no zap ------------------------------
   const URL_PAINEL = "https://ciscpoa.github.io/Painel_Sensacao_Termica_POA/";
   const textoCompartilhamento = (d) => {
     const atual = sensacaoAgora(d);
     const partes = [`${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Calor Nível ${d.nivel}.`];
-    if (atual) partes.push(`Sensação térmica atual: ${grau(atual.valor)} às ${atual.hora}.`);
+    if (atual) partes.push(`Sensação térmica atual: ${grau(atual.valor)}.`);
     partes.push(`Sensação térmica máxima: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}.`);
     partes.push(d.motivo);
     partes.push(`Acesse o painel: ${URL_PAINEL}`);
