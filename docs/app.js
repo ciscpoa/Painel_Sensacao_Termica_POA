@@ -262,7 +262,7 @@
       y = desenharTexto(ctx, `• ${texto}`, 60, y, 1080, compacto ? 22 : 29, 2) + (compacto ? 4 : 7);
     });
     ctx.fillStyle = d.cor_fg; ctx.font = '500 19px "Public Sans", sans-serif';
-    ctx.textAlign = "right"; ctx.fillText("ciscpoa.github.io/protocolo_de_calor_Porto_Alegre", 1140, 606);
+    ctx.textAlign = "right"; ctx.fillText("ciscpoa.github.io/Painel_Sensacao_Termica_POA/", 1140, 606);
     return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   }
 
