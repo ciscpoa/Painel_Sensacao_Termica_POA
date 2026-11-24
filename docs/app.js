@@ -472,10 +472,11 @@
         return;
       }
       const quadro = (centroX, centroY) => {
-        const w = 58, h = 18, q = fundo.append("g").attr("class", "mini-quadro").attr("data-modelo");
+        const w = 58, h = 18, q = fundo.append("g").attr("class", "mini-quadro");
         q.append("rect").attr("x", centroX - w / 2).attr("y", centroY - h / 2).attr("width", w).attr("height", h).attr("rx", 5)
           .style("fill", "var(--superficie)").style("stroke", "var(--borda)");
-        texto(q, centroX, centroY, d.poaclima.chuva_mm == null ? "—" : `${f1(d.poaclima.chuva_mm)} mm`,
+        const chuvaPoa = d.poaclima?.chuva_mm;
+        texto(q, centroX, centroY, chuvaPoa == null ? "—" : `${f1(chuvaPoa)} mm`,
           { ancora: "middle", cor: "var(--tinta2)", tam: 10, peso: 650 });
       };
       if (larguraDia < 115) {
