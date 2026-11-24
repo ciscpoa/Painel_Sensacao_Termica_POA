@@ -409,13 +409,99 @@
     );
   }
 
+  const INMET_CORES = {
+    Amarelo: { bg: "#fef08a", fg: "#713f12", borda: "#eab308", rotulo: "Perigo potencial" },
+    Laranja: { bg: "#fed7aa", fg: "#7c2d12", borda: "#ea580c", rotulo: "Perigo" },
+    Vermelho: { bg: "#fecaca", fg: "#7f1d1d", borda: "#dc2626", rotulo: "Grande perigo" },
+  };
+
+  function avisosInmetDoDia(d) {
+    const info = P.inmet;
+    if (!info || !info.consultado) return { consultado: false, lista: [] };
+    const todos = [...(info.alertas || []), ...(info.alertas_futuros || [])];
+    const vistos = new Set();
+    const lista = [];
+    for (const a of todos) {
+      const chave = `${a.severidade}|${a.tipo}|${a.inicio}|${a.fim}`;
+      if (vistos.has(chave)) continue;
+      vistos.add(chave);
+      const ini = a.inicio ? a.inicio.slice(0, 10) : null;
+      const fim = a.fim ? a.fim.slice(0, 10) : null;
+      const cabeNoDia = (!ini && !fim)
+        ? d.data === AGORA.data
+        : ((!ini || ini <= d.data) && (!fim || fim >= d.data));
+      if (cabeNoDia) lista.push(a);
+    }
+    return { consultado: true, lista };
+  }
+
+  function formatarJanelaInmet(ini, fim) {
+    const fmt = (s) => (!s ? null : (s.length >= 16 ? `${ddmm(s)} ${s.slice(11, 16)}` : ddmm(s)));
+    const a = fmt(ini), b = fmt(fim);
+    if (a && b) return `${a} → ${b}`;
+    if (a) return `a partir de ${a}`;
+    if (b) return `até ${b}`;
+    return "vigência não informada";
+  }
+
+  function renderAvisosINMET(d) {
+    const { consultado, lista } = avisosInmetDoDia(d);
+    let corpo;
+    if (!consultado) {
+      corpo = el("p", { class: "inmet-vazio" }, "Avisos do INMET indisponíveis nesta atualização.");
+    } else if (!lista.length) {
+      corpo = el("p", { class: "inmet-vazio inmet-ok" }, "Nenhum aviso meteorológico vigente do INMET para Porto Alegre neste dia.");
+    } else {
+      corpo = el("div", { class: "inmet-lista" }, ...lista.map((a) => {
+        const cor = INMET_CORES[a.severidade] || INMET_CORES.Amarelo;
+        return el("div", {
+          class: "inmet-item",
+          style: `background:${cor.bg};color:${cor.fg};border-left:5px solid ${cor.borda}`,
+        },
+          el("div", { class: "inmet-topo" },
+            el("strong", {}, a.tipo || a.descricao || "Aviso meteorológico"),
+            el("span", { class: "inmet-sev", style: `background:${cor.fg};color:${cor.bg}` }, `${a.severidade} · ${cor.rotulo}`)),
+          el("div", { class: "inmet-vigencia" }, `Vigência: ${formatarJanelaInmet(a.inicio, a.fim)}`),
+          a.detalhe ? el("p", { class: "inmet-detalhe" }, a.detalhe) : null,
+        );
+      }));
+    }
+    return el("div", { class: "inmet-bloco" },
+      el("div", { class: "inmet-cab" },
+        el("h3", {}, "Avisos meteorológicos (INMET)"),
+        el("a", { href: "https://avisos.inmet.gov.br/", target: "_blank", rel: "noopener noreferrer" }, "INMET ↗")),
+      corpo);
+  }
+
   function renderUV() {
     const d = DIAS[selecionado], info = d.uv, alvo = $("uv");
+    const blocoInmet = renderAvisosINMET(d);
     if (!info || apresentarUV(info.max) == null) {
-      trocar(alvo, el("h2", { class: "rotulo" }, "Índice ultravioleta (UV)", el("small", {}, "radiação solar e proteção")),
-        el("p", { class: "indisponivel" }, "Índice UV indisponível nesta atualização. Consulte novamente na próxima atualização da previsão."));
+      trocar(alvo,
+        el("h2", { class: "rotulo" }, "Índice ultravioleta (UV)", el("small", {}, "radiação solar e proteção")),
+        el("p", { class: "indisponivel" }, "Índice UV indisponível nesta atualização. Consulte novamente na próxima atualização da previsão."),
+        blocoInmet);
       return;
     }
+    const maximo = apresentarUV(info.max), iAtual = indiceHoraAtual(d.data);
+    const uvAtual = iAtual >= 0 && H.uv ? apresentarUV(H.uv[iAtual]) : null;
+    const ehAtual = uvAtual != null, valor = ehAtual ? uvAtual : maximo;
+    const fx = ehAtual ? nivelUV(H.uv[iAtual]) : nivelUV(info.max);
+    const hora = ehAtual ? H.tempo[iAtual].slice(11, 16) : info.h_max;
+    trocar(alvo,
+      el("h2", { class: "rotulo" }, "Índice ultravioleta (UV)", el("small", {}, ehAtual ? "valor da hora mais recente" : "máximo previsto no dia")),
+      el("div", { class: "valor-uv" }, el("strong", { "aria-label": `${ehAtual ? "Índice UV atual" : "Índice UV máximo"} ${valor}`, style: `color:${fx.cor_fg}` }, String(valor)),
+        el("span", { class: "pilula-faixa", style: `background:${fx.cor_bg};color:${fx.cor_fg}` }, fx.nome),
+        el("span", { class: "hora" }, `às ${hora}`)),
+      ehAtual ? el("p", { class: "maximo-uv" }, `Máxima prevista hoje: UV ${maximo} · ${nivelUV(info.max).nome} às ${info.h_max}`) : null,
+      el("div", { class: "escala-uv", role: "img", "aria-label": `Escala UV: ${fx.nome}, valor ${valor}` }, ...niveisUV.map((f) =>
+        el("span", { style: `--cor-uv:${f.cor_fg}`, title: f.nome, "aria-current": f.nome === fx.nome ? "true" : null }, `${f.min}${f.max == null ? "+" : `–${f.max}`}`))),
+      !ehAtual && info.max_ceu_limpo != null ? el("p", { class: "agora-uv" }, `Céu limpo: UV máx. ${apresentarUV(info.max_ceu_limpo)}`) : null,
+      el("p", { class: "cuidado-uv" }, fx.cuidado),
+      el("p", { class: "explica" }, "Referência: ", el("a", { href: "https://www.who.int/publications/i/item/9241590076", target: "_blank", rel: "noopener" }, "Global Solar UV Index — OMS")),
+      blocoInmet,
+    );
+  }
     const maximo = apresentarUV(info.max), iAtual = indiceHoraAtual(d.data);
     const uvAtual = iAtual >= 0 && H.uv ? apresentarUV(H.uv[iAtual]) : null;
     const ehAtual = uvAtual != null, valor = ehAtual ? uvAtual : maximo;
