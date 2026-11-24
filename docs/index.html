@@ -188,7 +188,6 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .horas .texto-resumo { flex: 1; min-width: 0; font-size: clamp(12px, 0.3vw + 10px, 13.5px) !important; line-height: 1.2 !important; }
 .horas .rotulo-estresse { display: block; margin-top: auto; padding-top: 10px; font-size: clamp(11.5px, 0.3vw + 10px, 13.5px); font-weight: 750; line-height: 1.25; }
 .horas span { font-size: clamp(11.5px, 0.3vw + 10px, 13.5px); line-height: 1.3; display: flex; align-items: center; gap: 4px; }
-.horas span { font-size: 11px; line-height: 1.3; display: flex; align-items: center; gap: 4px; }
 .ponto-faixa { width: 8px; height: 8px; flex: none; display: inline-block; border-radius: 2px; }
 .sensacao .explica { font-size: 13px; color: var(--tinta2); margin: 12px 0 0; }
 
@@ -204,7 +203,7 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .numeros strong { display: inline-block; margin-top: 4px; font-size: clamp(21px, 1.3vw + 16px, 30px); font-weight: 680; line-height: 1.15; }
 .numeros small { display: block; margin-top: 2px; font-size: 12px; line-height: 1.35; color: var(--tinta2); }
 
-.uv { order: 3; background: var(--uv-fundo); }
+.uv { order: 3; background: var(--uv-fundo); display: flex; flex-direction: column; }
 .uv .valor-uv { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 14px 0 8px; }
 .uv .valor-uv strong { font-size: clamp(64px, 5vw + 28px, 88px); font-weight: 650; line-height: 0.95; letter-spacing: -0.055em; }
 .uv .valor-uv .hora { color: var(--tinta2); font-size: 13px; }
@@ -214,8 +213,22 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .uv .maximo-uv { margin: 6px 0 0; color: var(--tinta2); font-size: 14px; font-weight: 600; }
 .uv .agora-uv { margin: 12px 0 0; padding-block: 9px; border-block: 1px solid var(--grade); font-size: 14px; font-weight: 650; }
 .uv .cuidado-uv { margin: 12px 0 0; font-size: 14px; line-height: 1.5; }
-.uv .explica { margin: 10px 0 0; color: var(--tinta2); font-size: 12px; line-height: 1.5; }
-.uv .indisponivel { margin: 16px 0 0; color: var(--tinta2); }
+.uv .explica { margin: 10px 0 16px; color: var(--tinta2); font-size: 12px; line-height: 1.5; }
+.uv .indisponivel { margin: 16px 0 16px; color: var(--tinta2); }
+
+.inmet-bloco { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--grade); }
+.inmet-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.inmet-cab h3 { margin: 0; font-size: 16px; line-height: 1.3; font-weight: 680; }
+.inmet-cab a { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.inmet-lista { display: flex; flex-direction: column; gap: 10px; }
+.inmet-item { border-radius: 12px; padding: 11px 13px; }
+.inmet-topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; }
+.inmet-topo strong { font-size: 14px; line-height: 1.3; }
+.inmet-sev { border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 750; white-space: nowrap; }
+.inmet-vigencia { margin-top: 5px; font-size: 12px; font-weight: 650; opacity: 0.92; }
+.inmet-detalhe { margin: 6px 0 0; font-size: 12.5px; line-height: 1.45; }
+.inmet-vazio { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--lavagem); color: var(--tinta2); font-size: 13px; line-height: 1.45; }
+.inmet-vazio.inmet-ok { border-left: 4px solid #16a34a; }
 @media (min-width: 700px) {
   .hoje { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hoje .alerta { grid-column: 1 / -1; }
@@ -453,7 +466,7 @@ footer .emergencia { font-size: 16px; }
 
   <details class="tecnico" id="tecnico">
     <summary>Detalhes técnicos</summary>
-    <p></strong> A previsão diária de tempo é fornecida por <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima/Catavento</a>. A tabela abaixo conserva os valores dos modelos para comparação técnica.</p>
+    <p>A previsão diária de tempo é fornecida por <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima/Catavento</a>. A tabela abaixo conserva os valores dos modelos para comparação técnica.</p>
     <div class="segmentado" id="modelo-tec" role="group" aria-label="Modelo"></div>
     <div class="vista-tabela" id="tabela-tec" style="max-height:none"></div>
     <h3 style="font-size:17px;margin:20px 0 8px">Regras do Protocolo</h3>
@@ -467,8 +480,9 @@ footer .emergencia { font-size: 16px; }
       <li>Rescaldo: depois de um dia em Nível 3 ou mais, um dia que cairia para Nível 1 fica em Nível 2.</li>
       <li>As regras entre dias consideram também os 3 dias anteriores. O horário crítico é o do nível final do dia.</li>
       <li>Chuva: previsão e estabilidade pelo NOAA/GFS no centro e na vizinhança de 55 km, com probabilidade de chuva diária ≥ 10, 25 e 50 mm em algum ponto da vizinhança (NMEP) pelo ensemble NOAA/GFS.</li>
+      <li>Avisos meteorológicos: consultados na API pública do <a href="https://avisos.inmet.gov.br/" target="_blank" rel="noopener noreferrer">INMET</a> para Porto Alegre (código IBGE 4314902, mesorregião e polígono municipal) e exibidos abaixo do índice UV.</li>
     </ul>
-    <p><strong>Métodos:</strong> UTCI <a href="https://www.utci.org/" target="_blank" rel="noopener">www.utci.org</a> (Fiala et al., 2012; Bröde et al., 2012), temperatura radiante média no esquema ERA5-HEAT (Di Napoli et al., 2020), orientações da OMM (WMO-No. 1142). Índice UV: <a href="https://www.who.int/publications/i/item/9241590076" target="_blank" rel="noopener">OMS — Global Solar UV Index: A Practical Guide (2002)</a>.</p>
+    <p><strong>Métodos:</strong> <a href="https://www.utci.org/" target="_blank" rel="noopener">Universal Thermal Climate Index</a> (Fiala et al., 2012; Bröde et al., 2012), temperatura radiante média no esquema ERA5-HEAT (Di Napoli et al., 2020), orientações da OMM (WMO-No. 1142). Índice UV: <a href="https://www.who.int/publications/i/item/9241590076" target="_blank" rel="noopener">OMS — Global Solar UV Index: A Practical Guide (2002)</a>.</p>
   </details>
 </main>
 
@@ -477,7 +491,7 @@ footer .emergencia { font-size: 16px; }
     <img class="logos-rodape" src="img/dvs-cisc.png" width="3972" height="453" alt="CISC, Diretoria de Vigilância em Saúde, Sistema Único de Saúde e Prefeitura de Porto Alegre – Secretaria de Saúde">
     <div class="creditos">
       <p><strong>Painel de Calor de Porto Alegre</strong>, desenvolvido pelo CISC – Centro de Informação em Saúde e Clima.</p>
-      <p>Previsão diária: <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima</a> / Catavento Meteorologia. Sensação térmica, séries horárias, índice UV e alertas: modelos ECMWF/IFS e NOAA/GFS <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> (CC BY 4.0). Atualização a cada 3 .</p>
+      <p>Previsão diária: <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima</a> / Catavento Meteorologia. Sensação térmica, séries horárias e índice UV: modelos ECMWF/IFS e NOAA/GFS via <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> (CC BY 4.0). Avisos meteorológicos: <a href="https://avisos.inmet.gov.br/" target="_blank" rel="noopener noreferrer">INMET</a>. Atualização a cada 3 horas.</p>
       <p class="emergencia"><strong>Emergência:</strong> SAMU <strong>192</strong> · Defesa Civil <strong>199</strong> · Bombeiros <strong>193</strong></p>
     </div>
   </div>
