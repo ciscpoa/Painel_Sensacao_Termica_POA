@@ -180,7 +180,7 @@
   }
 
   // ------------------------------------------------------------------ compartilhar
-  const URL_PAINEL = "https://ciscpoa.github.io/protocolo_de_calor_Porto_Alegre/";
+  const URL_PAINEL = "https://ciscpoa.github.io/Painel_Sensacao_Termica_POA/";
   const textoCompartilhamento = (d) => `${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Calor Nível ${d.nivel}. `
     + `Sensação térmica máxima ${grau(d.sensacao.max)} às ${d.sensacao.h_max}. ${d.motivo} Acesse o painel: ${URL_PAINEL}`;
 
@@ -362,7 +362,7 @@
       .sort((a, b) => a.f.de - b.f.de);
     trocar($("sensacao"),
       el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica agora" : "Sensação térmica máxima",
-        el("small", {}, ehAtual ? "previsão Open-Meteo para a hora atual, em Porto Alegre" : "pico Open-Meteo previsto para o dia selecionado")),
+        el("small", {}, ehAtual ? "em Porto Alegre" : "pico previsto para o dia selecionado")),
       el("div", { class: "valor" }, el("strong", {}, grau(valor)),
         el("span", { class: "pilula-faixa", style: `background:${fx.cor};color:${textoFaixa(fx)}` }, fx.nome),
         el("span", { class: "hora" }, `às ${hora}`)),
@@ -379,21 +379,21 @@
           listaPeriodos(periodos),
           el("span", { class: "rotulo-estresse" }, rotulo));
       })),
-      el("p", { class: "explica" }, "A sensação térmica é calculada pelo Open-Meteo com temperatura do ar, radiação solar, umidade e vento. Os alertas também consideram a duração do calor e o acúmulo entre dias."),
+      el("p", { class: "explica" }, "A sensação térmica é calculada a partir da junção da temperatura do ar, radiação solar, umidade e vento. Os níveis de alerta também consideram a duração do calor e o acúmulo entre dias."),
     );
   }
 
   function renderTempo() {
     const d = DIAS[selecionado], p = d.poaclima;
     trocar($("tempo-dia"),
-      el("h2", { class: "rotulo" }, "Condições do dia", el("small", {}, "PoaClima / Catavento")),
+      el("h2", { class: "rotulo" }, "Previsão do Tempo", el("small", {}, "PoaClima")),
       el("div", { class: "linha1" }, icone(d.icone, 52), el("div", {}, el("div", { class: "cond" }, d.condicao), el("div", { class: "estab" }, d.tempo))),
       el("div", { class: "numeros" },
-        el("div", {}, el("span", {}, "Temperatura máxima"), el("strong", {}, grau(d.temp.max)), el("small", {}, "PoaClima")),
-        el("div", {}, el("span", {}, "Temperatura mínima"), el("strong", {}, grau(d.temp.min)), el("small", {}, "PoaClima")),
-        el("div", {}, el("span", {}, "Chuva prevista"), el("strong", {}, `${f1(p.chuva_mm)} mm`), el("small", {}, "PoaClima")),
-        el("div", {}, el("span", {}, "Umidade máxima / mínima"), el("strong", {}, `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`), el("small", {}, "PoaClima")),
-        el("div", {}, el("span", {}, "Vento previsto"), el("strong", {}, `${f0(p.vento_kmh)} km/h`), el("small", {}, `direção ${p.vento_dir} · PoaClima`)),
+        el("div", {}, el("span", {}, "Temperatura máxima"), el("strong", {}, grau(d.temp.max)), el("small", {})),
+        el("div", {}, el("span", {}, "Temperatura mínima"), el("strong", {}, grau(d.temp.min)), el("small", {})),
+        el("div", {}, el("span", {}, "Chuva prevista"), el("strong", {}, `${f1(p.chuva_mm)} mm`), el("small", {})),
+        el("div", {}, el("span", {}, "Umidade máxima / mínima"), el("strong", {}, `${f0(p.umidade_max_pct)}% / ${f0(p.umidade_min_pct)}%`), el("small", {})),
+        el("div", {}, el("span", {}, "Vento previsto"), el("strong", {}, `${f0(p.vento_kmh)} km/h`), el("small", {}, `direção ${p.vento_dir}`)),
       ),
     );
   }
@@ -436,7 +436,7 @@
       },
         el("div", { class: "cab" }, el("b", {}, rotuloDia(d)), el("span", {}, ddmm(d.data))),
         el("span", { class: "chip", style: `background:${d.cor_bg};color:${d.cor_fg}` }, `Calor Nível ${d.nivel}`),
-        el("div", { class: "sens", title: "Sensação térmica calculada pelo Open-Meteo" }, el("span", {}, "Sensação máxima"),
+        el("div", { class: "sens", title: "Sensação térmica calculada pelo CISC" }, el("span", {}, "Sensação térmica máxima"),
           el("div", {}, el("i", { class: "pt", style: `background:${fx.cor}` }), el("strong", {}, grau(d.sensacao.max)))),
         el("div", { class: "cond" }, icone(d.icone, 28), d.condicao),
         el("div", { class: "info", title: "Previsão diária do PoaClima / Catavento" }, `Temp. ${grau(d.temp.max)} / ${grau(d.temp.min)}`, el("br"),
