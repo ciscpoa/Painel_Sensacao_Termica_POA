@@ -24,8 +24,8 @@ em `docs/` e é publicada pelo GitHub Pages. Uma automação (GitHub Actions) re
 - **PoaClima / Catavento Meteorologia:** condição do tempo e respectivo ícone, temperaturas máxima
   e mínima, chuva diária, umidade máxima/mínima, velocidade e direção do vento. São os dados dos
   cartões públicos e dos totais diários sobre o gráfico de chuva.
-- **Open-Meteo (ECMWF/IFS e NOAA/GFS):** sensação térmica (UTCI), IBUTG, madrugada, séries horárias,
-  índice UV e todos os gatilhos dos alertas. A previsão do PoaClima não entra no cálculo dos níveis.
+- **Open-Meteo (ECMWF/IFS e NOAA/GFS):** Coleta das variáveis necessárias para o cálculo da sensação térmica (UTCI), IBUTG, madrugada, séries horárias,
+  índice UV e todos os gatilhos dos alertas. A previsão do PoaClima não entra no cálculo de sensação térmica e dos níveis.
 
 A coleta do PoaClima está em `calor/poaclima.py`. Ela reproduz no GitHub Actions a chamada JSON
 pública usada pela aba “Previsão do tempo” do aplicativo, com o cabeçalho `x-timezone`, três
@@ -35,13 +35,12 @@ interrompida e a publicação anterior permanece no ar, em vez de misturar fonte
 
 ## Página
 
-- Layout fluido (CSS grid e `clamp()`), testado de 320 px (celular) a 2560 px (monitor): 1, 2 ou 3 colunas
-  conforme a largura, sem rolagem lateral. Tema claro e escuro.
-- A sensação térmica (UTCI), que aciona os gatilhos, é o número principal: quadro próprio com régua das faixas
+- Layout fluido (CSS grid e `clamp()`), testado de 320 px (celular) a 2560 px (monitor): 1, 2 ou 3 colunas. Tema claro e escuro.
+- A sensação térmica (UTCI), que aciona os gatilhos: quadro próprio com régua das faixas
   do protocolo e horas acima de 28, 34 e 38 °C; destaque nos cartões dos dias e no gráfico hora a hora.
-- Gráfico hora a hora com seletor de modelo (Consenso, ECMWF, GFS) e legenda clicável para mostrar ou
+- Gráfico hora a hora com seletor de modelo (Média, ECMWF, GFS) e legenda clicável para mostrar ou
   esconder linhas; fundo com as faixas: < 10 °C (azul), 10–28 °C (verde) e os limites do protocolo.
-- Chuva por hora dos dois modelos lado a lado, sem média, com legenda clicável.
+- Chuva por hora dos dois modelos lado a lado e a estimativa diária do Poaclima.
 - Na publicação (GitHub Actions), `gerar_painel.py` carimba a versão nos endereços dos scripts
   (`app.js?v=AAAAMMDDHHMM`), para o navegador não usar arquivos antigos guardados na memória.
 - Botão "Compartilhar este alerta" (WhatsApp ou menu de compartilhamento do celular) e imagem de prévia
@@ -60,7 +59,7 @@ Para voltar à versão anterior: `git checkout v1 -- docs/index.html docs/app.js
 
 ## Como o nível é calculado
 
-Sensação térmica (UTCI) do consenso multimodelo (média do ECMWF IFS e do NOAA GFS) no centro de Porto
+Sensação térmica (UTCI) do ensemble multimodelo (média do ECMWF IFS e do NOAA GFS) no centro de Porto
 Alegre (−30,08; −51,21):
 
 | Nível | Gatilho diário |
@@ -85,7 +84,7 @@ python -m venv .venv
 .venv/bin/python gerar_painel.py        # baixa a previsão e grava docs/dados/
 ```
 
-Depois, abra `docs/index.html` no navegador (funciona sem servidor).
+Depois, abra `docs/index.html` no navegador.
 
 | Arquivo | Conteúdo |
 |---|---|
@@ -99,19 +98,9 @@ Depois, abra `docs/index.html` no navegador (funciona sem servidor).
 
 ## Observações sobre o código de origem
 
-- **UTCI:** usa a implementação de referência da biblioteca pythermalcomfort (mesmos coeficientes de
-  Bröde et al., 2012, e mesma pressão de vapor de Hardy ITS-90 do código original). Na cópia do código,
-  os operadores `*` e `**` do polinômio se perderam.
-- **Operadores restaurados:** haversine (`** 2`) e coeficiente de convecção do globo no IBUTG
-  (`6,3 · v^0,6 / D^0,4`).
-- **PET e índice de calor da NOAA** foram retirados: não fazem parte da análise do protocolo.
-- **Tmrt no esquema ERA5-HEAT completo** (Di Napoli et al., 2020), o método declarado no código
-  (`METODO_TMRT = 'ECMWF_ERA5'`): fator de área projetada `0,308·cos[h·(0,998 − h²/50000)]` com h em graus
-  (o código usava `γ²/4,92` com γ em radianos) e radiação direta normal ao sol, no instante da hora (o
-  código usava a direta horizontal, média da hora anterior). Na semana de 09/11/2026, a UTCI máxima diária
-  ficou ~1 °C menor que no código original, e os níveis passaram de 1-2-3-3-2 para 1-1-2-3-2.
-- **Persistência do Nível 2:** o comentário do código original pedia 2 dias seguidos quando a madrugada fica
-  entre 20 e 22 °C, mas o código não aplicava a regra. Agora aplica, com os 3 dias anteriores como contexto.
+- **UTCI:** usa a implementação de referência da biblioteca pythermalcomfort
+- **Tmrt no esquema ERA5-HEAT completo** Di Napoli et al., 2020
+
 
 ## Dados
 
