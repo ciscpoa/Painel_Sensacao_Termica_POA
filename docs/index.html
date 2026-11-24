@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel de Calor de Porto Alegre</title>
-<meta name="description" content="Alertas do Protocolo de Calor, sensação térmica atual, índice UV e previsão para Porto Alegre.">
+<meta name="description" content="Alertas do Protocolo de Calor, sensação térmica atual, índice UV e previsão do tempo para Porto Alegre.">
 <meta name="theme-color" content="#0b3b4c">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Painel de Calor de Porto Alegre — previsão e alertas">
 <meta property="og:description" content="Nível de alerta, sensação térmica atual, índice UV e cuidados para os próximos dias.">
-<meta property="og:url" content="https://ciscpoa.github.io/protocolo_de_calor_Porto_Alegre/">
-<meta property="og:image" content="https://ciscpoa.github.io/protocolo_de_calor_Porto_Alegre/img/compartilhar.png">
+<meta property="og:url" content="https://ciscpoa.github.io/Painel_Sensacao_Termica_POA/">
+<meta property="og:image" content="https://ciscpoa.github.io/Painel_Sensacao_Termica_POA/img/compartilhar.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -369,7 +369,7 @@ footer .emergencia { font-size: 16px; }
     <div class="titulos">
       <p class="sobre">CISC · Centro de Informação em Saúde e Clima</p>
       <h1>Painel de Calor de Porto Alegre</h1>
-      <p class="sub">Alertas, sensação térmica e previsão para os próximos 5 dias</p>
+      <p class="sub">Alertas, sensação térmica e previsão do tempo para os próximos 5 dias</p>
     </div>
     <div class="acoes">
       <span class="atualizado" id="atualizado"></span>
@@ -395,7 +395,7 @@ footer .emergencia { font-size: 16px; }
   </section>
 
   <section class="secao" id="proximos-dias" aria-labelledby="titulo-dias">
-    <div class="cab-secao"><h2 id="titulo-dias">Próximos dias</h2><p>Tempo, temperatura, chuva e vento: PoaClima/Catavento. Sensação térmica e alertas: Open-Meteo. Escolha um dia para atualizar o painel.</p></div>
+    <div class="cab-secao"><h2 id="titulo-dias">Próximos dias</h2><p>Tempo, temperatura, chuva e vento: PoaClima/Catavento. Sensação térmica e nível de calor: CISC Porto Alegre. Escolha um dia para atualizar o painel.</p></div>
     <div class="dias" id="dias" role="group" aria-label="Escolha o dia"></div>
   </section>
 
@@ -405,8 +405,8 @@ footer .emergencia { font-size: 16px; }
       <figure class="cartao" style="margin:0">
         <div class="cartao-topo">
           <div>
-            <h3>A sensação térmica é o que aciona os alertas</h3>
-            <p class="nota">Calculada pelo Open-Meteo, ela combina temperatura do ar, umidade, vento e radiação solar. Ative um ou mais modelos para comparar as linhas: <strong>contínua para sensação térmica</strong> e <strong>tracejada para temperatura do ar</strong>.</p>
+            <h3>A sensação térmica é estimada através do Universal Thermal Climate Index (UTCI)</h3>
+            <p class="nota">Ative um ou mais modelos para comparar as linhas: <strong>contínua para sensação térmica</strong> e <strong>tracejada para temperatura do ar</strong>.</p>
           </div>
           <button class="btn-tabela" type="button" data-tabela="graf-calor" aria-pressed="false">Tabela</button>
         </div>
@@ -422,7 +422,7 @@ footer .emergencia { font-size: 16px; }
         <div class="cartao-topo">
           <div>
             <h3>Chuva prevista (mm por hora)</h3>
-            <p class="nota">As barras horárias comparam ECMWF/IFS e NOAA/GFS via Open-Meteo, no centro de Porto Alegre. Os totais diários nos mini quadros são do PoaClima/Catavento.</p>
+            <p class="nota">As barras horárias comparam as estimativas de chuva dos modelos ECMWF/IFS e NOAA/GFS para Porto Alegre. Os totais diários são estimados pelo PoaClima/Catavento.</p>
           </div>
           <button class="btn-tabela" type="button" data-tabela="graf-chuva" aria-pressed="false">Tabela</button>
         </div>
@@ -450,12 +450,12 @@ footer .emergencia { font-size: 16px; }
 
   <details class="tecnico" id="tecnico">
     <summary>Detalhes técnicos</summary>
-    <p><strong>Fontes separadas:</strong> a previsão pública diária de tempo, temperatura, chuva, umidade e vento é do <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima/Catavento</a>. As séries horárias, a madrugada, a sensação térmica, o IBUTG, o índice UV e os cálculos dos alertas usam Open-Meteo. A tabela abaixo conserva os valores dos modelos para comparação técnica.</p>
+    <p><strong>Fontes separadas:</strong> a previsão diária de tempo é fornecida por <a href="https://prefeitura.poa.br/poaclima/" target="_blank" rel="noopener noreferrer">PoaClima/Catavento</a>. A tabela abaixo conserva os valores dos modelos para comparação técnica.</p>
     <div class="segmentado" id="modelo-tec" role="group" aria-label="Modelo"></div>
     <div class="vista-tabela" id="tabela-tec" style="max-height:none"></div>
     <h3 style="font-size:17px;margin:20px 0 8px">Regras do Protocolo</h3>
     <ul>
-      <li>Sensação térmica (UTCI) da Média (ensemble) dos modelos ECMWF/IFS e NOAA/GFS, no centro de Porto Alegre (−30,08; −51,21). A previsão diária do PoaClima não altera os níveis.</li>
+      <li>Sensação térmica (UTCI) da Média (ensemble) dos modelos ECMWF/IFS e NOAA/GFS, no centro de Porto Alegre (−30,08; −51,21).</li>
       <li>Nível 5: UTCI ≥ 48 °C por mais de 1 hora. Nível 4: ≥ 38 °C por mais de 2 horas. Nível 3: ≥ 34 °C por mais de 2 horas.</li>
       <li>Nível 2: UTCI ≥ 32 °C por 4 horas ou ≥ 28 °C por 7 horas. Com madrugada (0h–6h) quente, ≥ 22 °C, vale já no 1º dia; com madrugada amena, de 20 a 22 °C, a partir do 2º dia seguido de calor; com madrugada abaixo de 20 °C, o dia fica em Nível 1.</li>
       <li>Atenuação de N3 para N2: exige no máximo 3 horas de UTCI ≥ 34 °C, pico abaixo de 36,5 °C e madrugada abaixo de 18,5 °C.</li>
