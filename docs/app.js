@@ -33,12 +33,12 @@
   const FAIXAS = [
     { de: -99, ate: -40, cor: "#08306b", texto: "#fff", nome: "Frio extremo", rotulo: "estresse extremo por frio" },
     { de: -40, ate: -27, cor: "#08519c", texto: "#fff", nome: "Frio muito forte", rotulo: "estresse muito forte por frio" },
-    { de: -27, ate: -13, cor: "#3182bd", texto: "#fff", nome: "Frio forte", rotulo: "estresse forte por frio" },
-    { de: -13, ate: 0, cor: "#6baed6", texto: "#111", nome: "Frio moderado", rotulo: "estresse moderado por frio" },
-    { de: 0, ate: 9, cor: "#0d80bf", texto: "#fff", nome: "Frio leve", rotulo: "estresse leve por frio" },
-    { de: 9, ate: 26, cor: "#74c476", texto: "#111", nome: "Sem estresse térmico", rotulo: "sem estresse térmico" },
-    { de: 26, ate: 32, cor: "#facc15", texto: "#111", nome: "Estresse moderado por calor", rotulo: "estresse moderado por calor" },
-    { de: 32, ate: 38, cor: "#ea580c", texto: "#fff", nome: "Estresse forte por calor", rotulo: "estresse forte por calor" },
+    { de: -27, ate: 0, cor: "#3182bd", texto: "#fff", nome: "Frio forte", rotulo: "estresse forte por frio" },
+    { de: 0, ate: 6, cor: "#6baed6", texto: "#111", nome: "Frio moderado", rotulo: "estresse moderado por frio" },
+    { de: 6, ate: 11, cor: "#0d80bf", texto: "#fff", nome: "Frio leve", rotulo: "estresse leve por frio" },
+    { de: 11, ate: 28, cor: "#74c476", texto: "#111", nome: "Sem estresse térmico", rotulo: "sem estresse térmico" },
+    { de: 28, ate: 34, cor: "#facc15", texto: "#111", nome: "Estresse moderado por calor", rotulo: "estresse moderado por calor" },
+    { de: 34, ate: 38, cor: "#ea580c", texto: "#fff", nome: "Estresse forte por calor", rotulo: "estresse forte por calor" },
     { de: 38, ate: 46, cor: "#dc2626", texto: "#fff", nome: "Estresse muito forte por calor", rotulo: "estresse muito forte por calor" },
     { de: 46, ate: 99, cor: "#6b21a8", texto: "#fff", nome: "Estresse extremo por calor", rotulo: "estresse extremo por calor" },
   ];
