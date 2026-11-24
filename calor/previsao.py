@@ -2,8 +2,9 @@
 
 - Determinístico: ECMWF IFS 0,25° e NOAA GFS, horário, 5 dias à frente e 3 dias para trás (contexto das
   regras de persistência, acúmulo e rescaldo), em 25 pontos num raio de 55 km de Porto Alegre. Os índices
-  térmicos usam o ponto central; a chuva usa também a média e o máximo da grade. A radiação é a do
-  instante da hora, coerente com a posição do sol calculada para o mesmo horário.
+  térmicos usam o ponto central; a chuva usa também a média e o máximo da grade. A radiação e a
+  cobertura de nuvens são as do instante da hora, coerentes com a posição do sol calculada para o
+  mesmo horário.
 - Ensemble (GFS 0,25° com 31 membros e ECMWF IFS 0,25° com 51): probabilidade de chuva acumulada no
   dia acima de 10, 25 e 50 mm em algum ponto da vizinhança (NMEP).
 """
@@ -25,7 +26,8 @@ DIAS = 5
 DIAS_ANTERIORES = 3  # o acúmulo de N2 olha até 3 dias para trás
 VARIAVEIS = ["temperature_2m", "relative_humidity_2m", "wind_speed_10m", "direct_radiation_instant",
              "diffuse_radiation_instant", "direct_normal_irradiance_instant", "precipitation", "weather_code",
-             "wind_direction_10m", "wind_gusts_10m", "surface_temperature", "uv_index", "uv_index_clear_sky"]
+             "wind_direction_10m", "wind_gusts_10m", "surface_temperature", "uv_index", "uv_index_clear_sky",
+             "cloud_cover"]
 # UVI é fornecido pelo NOAA GFS; o ECMWF IFS aberto devolve essas duas séries como ausentes.
 MODELOS_DET = {"gfs_seamless": "gfs", "ecmwf_ifs025": "ecmwf"}
 MODELOS_ENS = {"gfs025": "gfs", "ecmwf_ifs025": "ecmwf"}
@@ -86,13 +88,14 @@ def processar_modelo(respostas, idx_centro: int) -> pd.DataFrame:
     vento_ms = var["wind_speed_10m"] / 3.6
     zen = indices.zenite_solar(tempos, LAT_CENTRAL, LON_CENTRAL)
     dir_h, dif, dni = var["direct_radiation_instant"], var["diffuse_radiation_instant"], var["direct_normal_irradiance_instant"]
-    tmrt = indices.tmrt_era5(t2m, dni, dif, dir_h, zen, ur=ur)
+    nuvens = var["cloud_cover"]
+    tmrt = indices.tmrt_era5(t2m, dni, dif, dir_h, zen, ur=ur, cobertura_nuvens=nuvens)
     chuva_grade = np.array([r.Hourly().Variables(VARIAVEIS.index("precipitation")).ValuesAsNumpy() for r in respostas], dtype=np.float64)
     return pd.DataFrame({
         "time": tempos, "t2m": t2m, "tskin": var["surface_temperature"], "rh2m": ur,
         "wind_kmh": var["wind_speed_10m"], "wind_gust_kmh": var["wind_gusts_10m"], "wind_dir": var["wind_direction_10m"],
         "precip_center": var["precipitation"], "precip_grid_mean": chuva_grade.mean(axis=0), "precip_grid_max": chuva_grade.max(axis=0),
-        "weather_code": var["weather_code"], "tmrt": tmrt,
+        "weather_code": var["weather_code"], "cloud_cover": nuvens, "tmrt": tmrt,
         "uv_index": var["uv_index"], "uv_index_clear_sky": var["uv_index_clear_sky"],
         "utci": indices.utci(t2m, tmrt, vento_ms, ur),
         "wbgt": indices.ibutg_iso7243(t2m, ur, vento_ms, dir_h + dif, tmrt),
