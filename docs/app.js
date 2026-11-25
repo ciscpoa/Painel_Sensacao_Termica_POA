@@ -191,20 +191,21 @@
     return partes.join(" ");
   };
 
-  function desenharTexto(ctx, texto, x, y, largura, alturaLinha, maxLinhas = 3, centralizar = false) {
-    const posX = centralizar ? x + largura / 2 : x;
-    ctx.textAlign = centralizar ? "center" : "left";
-    let linha = "", linhas = 0;
-    for (const palavra of texto.split(" ")) {
-      const teste = linha ? `${linha} ${palavra}` : palavra;
-      if (ctx.measureText(teste).width > largura && linha) {
-        linhas += 1;
-        if (linhas >= maxLinhas) { ctx.fillText(`${linha}…`, posX, y); return y + alturaLinha; }
-        ctx.fillText(linha, posX, y); y += alturaLinha; linha = palavra;
-      } else { linha = teste; }
-    }
-    if (linha) { ctx.fillText(linha, posX, y); y += alturaLinha; }
-    return y;
+  const abaHoras = $("hora-a-hora");
+  function desenharGraficos() {
+    esconderTip();
+    if (abaHoras && abaHoras.tagName === "DETAILS" && !abaHoras.open) return;
+    graficoCalor();
+    graficoChuva();
+    ["graf-calor", "graf-chuva"].forEach(vistaTabela);
+  }
+  if (abaHoras && abaHoras.tagName === "DETAILS") {
+    abaHoras.addEventListener("toggle", () => {
+      if (abaHoras.open) desenharGraficos();
+    });
+    document.querySelector('a[href="#hora-a-hora"]')?.addEventListener("click", () => {
+      abaHoras.open = true;
+    });
   }
 
   function caixa(ctx, x, y, w, h, r = 16) {
@@ -768,7 +769,7 @@
     }));
     const semChuva = visiveis.every((s) => !(d3.max(s.dados) > 0.05));
     if (semChuva) texto(svg, (m.l + w - m.r) / 2, (m.t + h - m.b) / 2, visiveis.length ? "Sem chuva prevista no período" : "Escolha um modelo acima", { ancora: "middle", cor: "var(--tinta2)", tam: 13 });
-    linhaAgora(svg, x, m, h);
+    linhaAgora(svg, x, m, h, true);
     cruz(svg, x, m, w, h, (i) => ({ titulo: rotuloHora(i), linhas: CHUVA.map((s) => ({ valor: `${f1(s.dados[i])} mm`, rotulo: s.nome, cor: s.cor })) }));
     TABELAS["graf-chuva"] = { colunas: ["Hora", "ECMWF/IFS (mm)", "NOAA/GFS (mm)"], linhas: T.map((_, i) => [rotuloHora(i), f1(H.chuva_ecmwf[i]), f1(H.chuva_gfs[i])]) };
   }
