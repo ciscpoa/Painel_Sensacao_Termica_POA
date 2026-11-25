@@ -120,7 +120,7 @@ p { max-width: 75ch; }
 .atalhos a { min-height: 48px; display: inline-flex; align-items: center; color: var(--tinta2); text-decoration: none; font-size: 14px; font-weight: 650; border-bottom: 3px solid transparent; }
 .atalhos a:hover { color: var(--marca); border-bottom-color: var(--laranja); }
 
-main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
+main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 clamp(44px, 4vw, 64px); }
 .secao, #hoje, details.tecnico { scroll-margin-top: 76px; }
 .secao { margin-top: clamp(34px, 4vw, 54px); }
 .cab-secao { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 24px; margin-bottom: 16px; border-bottom: 1px solid var(--grade); }
@@ -326,7 +326,8 @@ thead th { position: sticky; top: 0; background: var(--superficie); color: var(-
 @media (min-width: 620px) { .niveis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cuidados { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .nivel-linha { grid-template-columns: minmax(0, 1fr); } .nivel-linha .chip { grid-row: auto; } }
 
-details.tecnico { background: var(--superficie); border: 1px solid var(--borda); border-radius: 18px; padding: 16px 20px; margin-top: clamp(32px, 4vw, 52px); box-shadow: var(--sombra-leve); }
+details.tecnico { background: var(--superficie); border: 1px solid var(--borda); border-radius: 18px; padding: 16px 20px; margin-top: clamp(34px, 4vw, 54px); box-shadow: var(--sombra-leve); }
+details.tecnico + details.tecnico { margin-top: 14px; }
 details.tecnico summary { min-height: 44px; cursor: pointer; font-family: var(--f-titulo); font-weight: 650; font-size: 19px; }
 details.tecnico p, details.tecnico li { font-size: 14px; max-width: 75ch; }
 details.tecnico .vista-tabela td:first-child, details.tecnico .vista-tabela th:first-child { position: sticky; left: 0; background: var(--superficie); z-index: 1; }
@@ -345,7 +346,7 @@ details.tecnico .graficos { margin-top: 14px; }
 #tooltip .l + .l { margin-top: 4px; }
 #tooltip .l strong { flex: none; white-space: nowrap; font-size: 14px; font-variant-numeric: tabular-nums; }
 #tooltip .l span { flex: 1; min-width: 0; color: var(--tinta2); }
-footer { background: #eef4f5; color: #17323c; margin-top: 8px; border-top: 3px solid var(--laranja); }
+footer { background: #eef4f5; color: #17323c; margin-top: 0; border-top: 3px solid var(--laranja); }
 footer .largura { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: center; padding-block: 28px 34px; }
 footer .logos-rodape { width: min(100%, 760px); height: auto; flex: 0 1 720px; background: transparent; padding: 0; }
 footer .creditos { flex: 1 1 340px; font-size: 14px; line-height: 1.6; }
@@ -486,7 +487,8 @@ footer .emergencia { font-size: 16px; }
     </ul>
     <p><strong>Métodos:</strong> <a href="https://www.utci.org/" target="_blank" rel="noopener">Universal Thermal Climate Index</a> (Fiala et al., 2012; Bröde et al., 2012), temperatura radiante média no esquema ERA5-HEAT (Di Napoli et al., 2020), orientações da OMM (WMO-No. 1142). Índice UV: <a href="https://www.who.int/publications/i/item/9241590076" target="_blank" rel="noopener">OMS — Global Solar UV Index: A Practical Guide (2002)</a>.</p>
   </details>
-
+</main>
+  
 <footer>
   <div class="largura">
     <img class="logos-rodape" src="img/dvs-cisc.png" width="3972" height="453" alt="CISC, Diretoria de Vigilância em Saúde, Sistema Único de Saúde e Prefeitura de Porto Alegre – Secretaria de Saúde">
