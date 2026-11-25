@@ -171,7 +171,7 @@ main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
 .regua .marcador { position: absolute; top: -8px; width: 0; height: 0; transform: translateX(-6px);
   border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--tinta); }
 .regua .marcador::after { content: ""; position: absolute; left: -1px; top: -8px; width: 2px; height: 28px; background: var(--tinta); }
-.regua .ticks { position: relative; height: 34px; font-size: 10.5px; color: var(--muda); white-space: nowrap; }
+.regua .ticks { position: relative; height: 22px; font-size: clamp(9.5px, 0.25vw + 8.5px, 10.5px); letter-spacing: -0.02em; color: var(--muda); white-space: nowrap; }
 .regua .ticks span { position: absolute; transform: translateX(-50%); }
 .rotulo-grupo { margin: 16px 0 6px; color: var(--tinta2); font-size: 12px; font-weight: 650; letter-spacing: 0.035em; text-transform: uppercase; }
 .horas { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
