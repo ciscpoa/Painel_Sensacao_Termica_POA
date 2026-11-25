@@ -333,7 +333,7 @@
       el("i", { class: "marcador", style: `left:${pos(valor)}%` }));
     const marcas = FAIXAS.map((f) => f.de).filter((v) => v > MIN && v < MAX);
     const ticks = el("div", { class: "ticks" }, ...marcas.map((t) => el("span", {
-    style: `left:${pos(t)}%;top:${t === 6 || t === 34 ? "16px" : "3px"}` }, `${t}°C`)));
+      style: `left:${pos(t)}%;top:3px` }, `${t}°C`)));
     return el("div", { class: "regua", role: "img", "aria-label": `${atual ? "Sensação térmica atual" : "Sensação térmica máxima"} de ${f0(valor)} °C, faixa ${faixa(valor).nome}` }, barra, ticks);
   }
 
@@ -579,11 +579,31 @@
     const g = svg.append("g").attr("class", "eixo"), marcas = w > 720 ? [6, 12, 18] : [12];
     T.forEach((t, i) => { if (marcas.includes(t.getUTCHours())) texto(g, x(meio(i)), h - m.b + 14, `${t.getUTCHours()}h`, { ancora: "middle" }); });
   }
-  function linhaAgora(svg, x, m, h) {
+  function linhaAgora(svg, x, m, h, noTopo = false) {
     if (AGORA.quando < +dominioX[0] || AGORA.quando > +dominioX[1]) return;
     const xa = x(new Date(AGORA.quando));
-    linhaV(svg, xa, m.t, h - m.b, "var(--tinta2)");
-    texto(svg, xa + 4, h - m.b - 8, "agora", { cor: "var(--tinta2)" });
+    const g = svg.append("g").attr("class", "linha-agora");
+    g.append("line")
+      .attr("x1", xa).attr("x2", xa)
+      .attr("y1", m.t).attr("y2", h - m.b)
+      .style("stroke", "var(--tinta2)")
+      .style("stroke-width", 1.4)
+      .style("stroke-dasharray", "4 3")
+      .attr("shape-rendering", "crispEdges");
+
+    const ty = noTopo ? m.t + 11 : h - m.b - 11;
+    const wTag = 38, hTag = 16;
+    const xMax = x.range()[1];
+    const tx = xa + 4 + wTag > xMax ? xa - wTag - 4 : xa + 4;
+
+    g.append("rect")
+      .attr("x", tx).attr("y", ty - hTag / 2)
+      .attr("width", wTag).attr("height", hTag).attr("rx", 4)
+      .style("fill", "var(--superficie)")
+      .style("fill-opacity", 0.94)
+      .style("stroke", "var(--borda)");
+
+    texto(g, tx + wTag / 2, ty, "agora", { ancora: "middle", cor: "var(--tinta)", tam: 10.5, peso: 650 });
   }
   function cruz(svg, x, m, w, h, aoMostrar) {
     const linha = svg.append("line").style("stroke", "var(--tinta2)").style("stroke-width", 1).style("display", "none");
@@ -699,7 +719,7 @@
         texto(plot, px, py + 17 + imodelo * 10, `${f0(TA[im])} °C`, { ancora: "middle", cor: CORES_TEMP[mod], tam: ativos.length > 1 ? 10 : 11, peso: 650 });
       });
     });
-    linhaAgora(svg, x, m, h);
+    linhaAgora(svg, x, m, h, true);
     cruz(svg, x, m, w, h, (i, g, px) => {
       const linhas = [];
       ativos.forEach((mod) => {
