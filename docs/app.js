@@ -400,7 +400,7 @@
     trocar($("tempo-dia"),
       el("h2", { class: "rotulo" }, "Previsão do Tempo"),
       el("div", { class: "linha1" },
-        icone(d.icone, 52),
+        icone(d.icone, 70),
         el("div", {},
           el("div", { class: "cond" }, d.condicao),
           el("div", { class: "estab" }, d.tempo),
