@@ -121,7 +121,7 @@ p { max-width: 75ch; }
 .atalhos a:hover { color: var(--marca); border-bottom-color: var(--laranja); }
 
 main { flex: 1; padding: clamp(24px, 2.6vw, 38px) 0 52px; }
-.secao, #hoje { scroll-margin-top: 76px; }
+.secao, #hoje, details.tecnico { scroll-margin-top: 76px; }
 .secao { margin-top: clamp(34px, 4vw, 54px); }
 .cab-secao { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 24px; margin-bottom: 16px; border-bottom: 1px solid var(--grade); }
 .cab-secao h2 { flex: 1 1 300px; font-size: clamp(23px, 0.7vw + 19px, 29px); line-height: 1.25; margin: 0 0 10px; font-weight: 680; letter-spacing: -0.018em; }
@@ -331,6 +331,8 @@ details.tecnico summary { min-height: 44px; cursor: pointer; font-family: var(--
 details.tecnico p, details.tecnico li { font-size: 14px; max-width: 75ch; }
 details.tecnico .vista-tabela td:first-child, details.tecnico .vista-tabela th:first-child { position: sticky; left: 0; background: var(--superficie); z-index: 1; }
 details.tecnico code { font-size: 14px; overflow-wrap: anywhere; }
+details.tecnico .nota-aba { margin: 4px 0 14px; color: var(--tinta2); font-size: 14px; }
+details.tecnico .graficos { margin-top: 14px; }
 .segmentado { display: inline-flex; flex-wrap: wrap; gap: 4px; border: 1px solid var(--borda); border-radius: 12px; padding: 4px; margin: 10px 0; background: var(--plano); }
 .segmentado button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 9px; background: transparent; color: var(--tinta2); font: 600 13px/1.2 var(--f-corpo); padding: 8px 14px; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out; }
 .segmentado button:hover { color: var(--marca); }
@@ -396,7 +398,7 @@ footer .emergencia { font-size: 16px; }
 </header>
 <nav class="atalhos" aria-label="Seções do painel">
   <div class="largura">
-    <a href="#hoje">Hoje</a><a href="#proximos-dias">Próximos dias</a><a href="#hora-a-hora">Hora a hora</a><a href="#cuidados">Cuidados</a><a href="#tecnico">Detalhes técnicos</a>
+    <a href="#hoje">Hoje</a><a href="#proximos-dias">Próximos dias</a><a href="#cuidados">Cuidados</a><a href="#entenda-niveis">Níveis</a><a href="#hora-a-hora">Hora a hora</a><a href="#tecnico">Detalhes técnicos</a>
   </div>
 </nav>
 
@@ -415,8 +417,24 @@ footer .emergencia { font-size: 16px; }
     <div class="dias" id="dias" role="group" aria-label="Escolha o dia"></div>
   </section>
 
-  <section class="secao" id="hora-a-hora" aria-labelledby="titulo-horas">
-    <div class="cab-secao"><h2 id="titulo-horas">Sensação térmica hora a hora</h2><p>Compare a sensação térmica com a temperatura do ar e consulte os valores em gráfico ou tabela.</p></div>
+  <section class="secao" id="cuidados" aria-labelledby="titulo-cuidados">
+    <div class="cab-secao"><h2 id="titulo-cuidados">Cuidados no calor</h2><p>Medidas simples reduzem o risco. Pessoas mais vulneráveis precisam de atenção redobrada.</p></div>
+    <div class="cuidados">
+      <div><h3>Para todos</h3><ul><li>Beba água ao longo do dia, mesmo sem sede.</li><li>Prefira roupas leves e claras; use chapéu e protetor solar.</li><li>Evite esforço físico nas horas mais quentes.</li><li>Busque sombra e lugares ventilados ou climatizados.</li></ul></div>
+      <div><h3>Quem precisa de mais atenção</h3><ul><li>Pessoas idosas e crianças pequenas.</li><li>Gestantes.</li><li>Pessoas com doenças do coração, pressão alta, diabetes, problemas renais ou transtornos mentais.</li><li>Trabalhadores ao ar livre e pessoas em situação de rua.</li></ul></div>
+      <div><h3>Sinais de alerta</h3><ul><li>Tontura, dor de cabeça, náusea, cãibras, confusão, pele quente e seca.</li><li>Leve a pessoa para um lugar fresco, ofereça água e afrouxe as roupas.</li><li>Se não melhorar, procure atendimento. Emergência: <strong>SAMU 192</strong>.</li></ul></div>
+    </div>
+  </section>
+
+  <section class="secao" id="entenda-niveis" aria-labelledby="titulo-niveis">
+    <div class="cab-secao"><h2 id="titulo-niveis">O que significa cada nível</h2><p>O alerta considera a intensidade, a duração do calor e a recuperação do corpo entre um dia e outro.</p></div>
+    <div class="niveis" id="niveis"></div>
+    <p class="nota-dias">Com madrugadas amenas, o Calor Nível 2 só começa no segundo dia de calor; o nível sobe quando o calor se repete, começa um dia antes quando um dia de calor forte está chegando e só baixa aos poucos depois de um dia em Calor Nível 3 ou superior.</p>
+  </section>
+
+  <details class="tecnico" id="hora-a-hora">
+    <summary>Sensação térmica hora a hora</summary>
+    <p class="nota-aba">Compare a sensação térmica com a temperatura do ar e consulte os valores em gráfico ou tabela.</p>
     <div class="graficos">
       <figure class="cartao" style="margin:0">
         <div class="cartao-topo">
@@ -446,23 +464,7 @@ footer .emergencia { font-size: 16px; }
         <div class="grafico" id="graf-chuva"></div>
       </figure>
     </div>
-  </section>
-
-  <section class="secao" id="entenda-niveis" aria-labelledby="titulo-niveis">
-    <div class="cab-secao"><h2 id="titulo-niveis">O que significa cada nível</h2><p>O alerta considera a intensidade, a duração do calor e a recuperação do corpo entre um dia e outro.</p></div>
-    <div class="niveis" id="niveis"></div>
-    <p class="nota-dias">Com madrugadas amenas, o Calor Nível 2 só começa no segundo dia de calor; o nível sobe quando o calor se repete, começa um dia antes quando um dia de calor forte está chegando e só baixa aos poucos depois de um dia em Calor Nível 3 ou superior.</p>
-  </section>
-
-  <section class="secao" id="cuidados" aria-labelledby="titulo-cuidados">
-    <div class="cab-secao"><h2 id="titulo-cuidados">Cuidados no calor</h2><p>Medidas simples reduzem o risco. Pessoas mais vulneráveis precisam de atenção redobrada.</p></div>
-    <div class="cuidados">
-      <div><h3>Para todos</h3><ul><li>Beba água ao longo do dia, mesmo sem sede.</li><li>Prefira roupas leves e claras; use chapéu e protetor solar.</li><li>Evite esforço físico nas horas mais quentes.</li><li>Busque sombra e lugares ventilados ou climatizados.</li></ul></div>
-      <div><h3>Quem precisa de mais atenção</h3><ul><li>Pessoas idosas e crianças pequenas.</li><li>Gestantes.</li><li>Pessoas com doenças do coração, pressão alta, diabetes, problemas renais ou transtornos mentais.</li><li>Trabalhadores ao ar livre e pessoas em situação de rua.</li></ul></div>
-      <div><h3>Sinais de alerta</h3><ul><li>Tontura, dor de cabeça, náusea, cãibras, confusão, pele quente e seca.</li><li>Leve a pessoa para um lugar fresco, ofereça água e afrouxe as roupas.</li><li>Se não melhorar, procure atendimento. Emergência: <strong>SAMU 192</strong>.</li></ul></div>
-    </div>
-  </section>
-
+  </details>
 
   <details class="tecnico" id="tecnico">
     <summary>Detalhes técnicos</summary>
@@ -480,11 +482,10 @@ footer .emergencia { font-size: 16px; }
       <li>Rescaldo: depois de um dia em Nível 3 ou mais, um dia que cairia para Nível 1 fica em Nível 2.</li>
       <li>As regras entre dias consideram também os 3 dias anteriores. O horário crítico é o do nível final do dia.</li>
       <li>Chuva: previsão e estabilidade pelo NOAA/GFS no centro e na vizinhança de 55 km, com probabilidade de chuva diária ≥ 10, 25 e 50 mm em algum ponto da vizinhança (NMEP) pelo ensemble NOAA/GFS.</li>
-      <li>Avisos meteorológicos: consultados na API pública do <a href="https://avisos.inmet.gov.br/" target="_blank" rel="noopener noreferrer">INMET</a> para Porto Alegre (código IBGE 4314902, mesorregião e polígono municipal).</li>
+      <li>Avisos meteorológicos: consultados na API pública do <a href="https://avisos.inmet.gov.br/" target="_blank" rel="noopener noreferrer">INMET</a> para Porto Alegre (código IBGE 4314902, mesorregião e polígono municipal) e exibidos abaixo do índice UV.</li>
     </ul>
     <p><strong>Métodos:</strong> <a href="https://www.utci.org/" target="_blank" rel="noopener">Universal Thermal Climate Index</a> (Fiala et al., 2012; Bröde et al., 2012), temperatura radiante média no esquema ERA5-HEAT (Di Napoli et al., 2020), orientações da OMM (WMO-No. 1142). Índice UV: <a href="https://www.who.int/publications/i/item/9241590076" target="_blank" rel="noopener">OMS — Global Solar UV Index: A Practical Guide (2002)</a>.</p>
   </details>
-</main>
 
 <footer>
   <div class="largura">
