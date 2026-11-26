@@ -24,8 +24,6 @@ URL_API = "https://api.helpertecnologia.com.br/defesa-civil/bff/climate/previsio
 FUSO = "America/Sao_Paulo"
 FONTE = "PoaClima / Catavento Meteorologia"
 
-# Rótulos idênticos aos apresentados pelo próprio PoaClima. O segundo valor
-# identifica o desenho usado pelo painel, sem depender de emojis do sistema.
 CONDICOES = {
     "rain_thunder": ("Chuva e raios", "chuva-raios"),
     "rain_sun": ("Chuva e sol", "sol-chuva"),
@@ -49,9 +47,14 @@ CONDICOES = {
 }
 
 
-def _numero(valor, campo: str, minimo: float, maximo: float) -> float:
-    if isinstance(valor, bool) or valor is None:
+def _numero(valor, campo: str, minimo: float, maximo: float,
+            permitir_ausente: bool = False) -> float | None:
+    if valor is None or (isinstance(valor, str) and not valor.strip()):
+        if permitir_ausente:
+            return None
         raise ValueError(f"PoaClima: {campo} ausente")
+    if isinstance(valor, bool):
+        raise ValueError(f"PoaClima: {campo} inválido: {valor!r}")
     try:
         numero = float(valor)
     except (TypeError, ValueError) as exc:
@@ -61,16 +64,19 @@ def _numero(valor, campo: str, minimo: float, maximo: float) -> float:
     return numero
 
 
-def normalizar_resposta(payload: dict, hoje: date | None = None) -> dict:
+def normalizar_resposta(payload: dict, hoje: date | None = None,
+                        estrito: bool = True) -> dict:
     """Valida o JSON e devolve somente dias presentes e campos utilizados.
 
-    Erros de esquema interrompem a geração. Assim, o Actions conserva a
-    publicação anterior em vez de apresentar silenciosamente outra fonte ou
-    valores inventados como se fossem do PoaClima.
+    Quando estrito=False, campos numéricos ausentes (null) no PoaClima são
+    preservados como None (exibidos como '—' no painel) sem interromper a
+    atualização dos alertas nem substituir silenciosamente por outra fonte.
+    Valores inválidos ou fora da faixa física continuam gerando erro.
     """
     if not isinstance(payload, dict) or not isinstance(payload.get("previsions"), list):
         raise ValueError("PoaClima: resposta sem a lista 'previsions'")
 
+    flex = not estrito
     dias = []
     datas_vistas = set()
     for bruto in payload["previsions"]:
@@ -90,7 +96,11 @@ def normalizar_resposta(payload: dict, hoje: date | None = None) -> dict:
             raise ValueError(f"PoaClima: condição do tempo desconhecida: {clima!r}")
         condicao, icone = CONDICOES[clima]
         direcao = str(bruto.get("wind_direction") or "").strip().upper()
-        if not direcao or len(direcao) > 4:
+        if not direcao:
+            if estrito:
+                raise ValueError(f"PoaClima: direção do vento inválida: {direcao!r}")
+            direcao = None
+        elif len(direcao) > 4:
             raise ValueError(f"PoaClima: direção do vento inválida: {direcao!r}")
 
         dia = {
@@ -98,17 +108,17 @@ def normalizar_resposta(payload: dict, hoje: date | None = None) -> dict:
             "clima": clima,
             "condicao": condicao,
             "icone": icone,
-            "chuva_mm": _numero(bruto.get("rain_quantity"), "chuva", 0.0, 1000.0),
-            "temp_max_c": _numero(bruto.get("max_temperature"), "temperatura máxima", -80.0, 70.0),
-            "temp_min_c": _numero(bruto.get("min_temperature"), "temperatura mínima", -80.0, 70.0),
-            "umidade_max_pct": _numero(bruto.get("max_humidity"), "umidade máxima", 0.0, 100.0),
-            "umidade_min_pct": _numero(bruto.get("min_humidity"), "umidade mínima", 0.0, 100.0),
-            "vento_kmh": _numero(bruto.get("wind_speed"), "vento", 0.0, 500.0),
+            "chuva_mm": _numero(bruto.get("rain_quantity"), "chuva", 0.0, 1000.0, permitir_ausente=flex),
+            "temp_max_c": _numero(bruto.get("max_temperature"), "temperatura máxima", -80.0, 70.0, permitir_ausente=flex),
+            "temp_min_c": _numero(bruto.get("min_temperature"), "temperatura mínima", -80.0, 70.0, permitir_ausente=flex),
+            "umidade_max_pct": _numero(bruto.get("max_humidity"), "umidade máxima", 0.0, 100.0, permitir_ausente=flex),
+            "umidade_min_pct": _numero(bruto.get("min_humidity"), "umidade mínima", 0.0, 100.0, permitir_ausente=flex),
+            "vento_kmh": _numero(bruto.get("wind_speed"), "vento", 0.0, 500.0, permitir_ausente=flex),
             "vento_dir": direcao,
         }
-        if dia["temp_min_c"] > dia["temp_max_c"]:
+        if dia["temp_min_c"] is not None and dia["temp_max_c"] is not None and dia["temp_min_c"] > dia["temp_max_c"]:
             raise ValueError(f"PoaClima: mínima maior que a máxima em {data.isoformat()}")
-        if dia["umidade_min_pct"] > dia["umidade_max_pct"]:
+        if dia["umidade_min_pct"] is not None and dia["umidade_max_pct"] is not None and dia["umidade_min_pct"] > dia["umidade_max_pct"]:
             raise ValueError(f"PoaClima: umidade mínima maior que a máxima em {data.isoformat()}")
         datas_vistas.add(data)
         dias.append(dia)
@@ -120,7 +130,7 @@ def normalizar_resposta(payload: dict, hoje: date | None = None) -> dict:
 
 
 def coletar_previsao(hoje: date | None = None, tentativas: int = 3, timeout: int = 30,
-                     session: requests.Session | None = None) -> dict:
+                     session: requests.Session | None = None, estrito: bool = False) -> dict:
     """Baixa a previsão com tentativas independentes e cabeçalho de fuso."""
     headers = {
         "Accept": "application/json",
@@ -128,7 +138,7 @@ def coletar_previsao(hoje: date | None = None, tentativas: int = 3, timeout: int
         "Origin": "https://clima.helpertecnologia.com.br",
         "Referer": URL_APLICATIVO,
         "x-timezone": FUSO,
-        "User-Agent": "CISC-Painel-Calor/1.0 (+https://ciscpoa.github.io/protocolo_de_calor_Porto_Alegre/)",
+        "User-Agent": "CISC-Painel-Calor/1.0 (+https://ciscpoa.github.io/Painel_Sensacao_Termica_POA/)",
     }
     cliente = session or requests.Session()
     ultimo_erro = None
@@ -137,7 +147,7 @@ def coletar_previsao(hoje: date | None = None, tentativas: int = 3, timeout: int
             try:
                 resposta = cliente.get(URL_API, headers=headers, timeout=timeout)
                 resposta.raise_for_status()
-                normalizado = normalizar_resposta(resposta.json(), hoje=hoje)
+                normalizado = normalizar_resposta(resposta.json(), hoje=hoje, estrito=estrito)
                 return {
                     "fonte": FONTE,
                     "url": URL_PAINEL,
