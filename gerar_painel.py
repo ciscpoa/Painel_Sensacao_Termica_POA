@@ -108,11 +108,15 @@ def main() -> None:
     dias = [d for d in todos_dias if d >= agora.date()]  # o painel mostra de hoje em diante
 
     print("Coletando a previsão diária do PoaClima/Catavento...")
-    clima_poa = poaclima.coletar_previsao(hoje=agora.date())
-    poa_por_data = {x["data"]: x for x in clima_poa["dias"]}
-    faltantes = [d.isoformat() for d in dias if d.isoformat() not in poa_por_data]
-    if faltantes:
-        raise RuntimeError(f"PoaClima sem previsão para os dias exibidos pelo painel: {', '.join(faltantes)}")
+    try:
+        clima_poa = poaclima.coletar_previsao(hoje=agora.date())
+        poa_por_data = {x["data"]: x for x in clima_poa["dias"]}
+        poaclima_ok = True
+    except Exception as erro:
+        print(f"Aviso: PoaClima indisponível ({erro}); usando consenso Open-Meteo como contingência.", file=sys.stderr)
+        clima_poa = {"atualizado_em": None, "coletado_em": agora.isoformat(timespec="minutes"), "dias": []}
+        poa_por_data = {}
+        poaclima_ok = False
 
     try:
         cubos = previsao.baixar_ensemble(om, pontos)
@@ -121,6 +125,81 @@ def main() -> None:
     except Exception as erro:  # o painel sai sem as probabilidades
         print(f"Aviso: ensemble indisponível ({erro})", file=sys.stderr)
         nmep, ensemble_ok = {"ecmwf": {}, "gfs": {}}, False
+
+    print("Coletando avisos meteorológicos do INMET para Porto Alegre...")
+    try:
+        avisos_inmet = inmet.coletar_alertas_inmet()
+    except Exception as erro:  # falha do INMET não derruba a geração do painel de calor
+        print(f"Aviso: coleta do INMET indisponível ({erro})", file=sys.stderr)
+        avisos_inmet = {
+            "alertas": [],
+            "alertas_futuros": [],
+            "max_severidade": None,
+            "fonte": "api",
+            "consultado": False,
+        }
+
+    diag_todos = protocolo.aplicar_regras_multidiarias([protocolo.avaliar_dia(mme[mme["date"] == d]) for d in todos_dias])
+    anteriores = [{"data": d.isoformat(), "nivel": x["nivel"], "gatilho": x["gatilho"]}
+                  for d, x in zip(todos_dias, diag_todos) if d < agora.date()]
+    diagnosticos = [x for d, x in zip(todos_dias, diag_todos) if d >= agora.date()]
+
+    _MAPA_ICONE = {
+        0: "sol", 1: "sol-poucas-nuvens", 2: "sol-poucas-nuvens",
+        3: "nublado", 51: "chuvisco", 63: "chuva", 95: "chuva-raios",
+    }
+
+    saida_dias = []
+    for d, diag in zip(dias, diagnosticos):
+        dia_ec, dia_gf, dia_m = ec[ec["date"] == d], gf[gf["date"] == d], mme[mme["date"] == d]
+        r_ec, r_gf = resumo_modelo(dia_ec, nmep["ecmwf"].get(d)), resumo_modelo(dia_gf, nmep["gfs"].get(d))
+        seta, direcao = protocolo.vento_predominante(pd.concat([dia_ec["wind_kmh"], dia_gf["wind_kmh"]]),
+                                                     pd.concat([dia_ec["wind_dir"], dia_gf["wind_dir"]]))
+        nivel = diag["nivel"]
+        poa = poa_por_data.get(d.isoformat())
+        t_mme = extremos(dia_m, "T2M_MME")
+
+        if poa is not None:
+            fonte_tempo = "PoaClima · Catavento"
+        else:
+            print(f"Aviso: dia {d.isoformat()} sem dados do PoaClima; aplicando contingência Open-Meteo.", file=sys.stderr)
+            cod = r_gf["codigo"]
+            poa = {
+                "data": d.isoformat(),
+                "temp_min_c": t_mme["min"],
+                "temp_max_c": t_mme["max"],
+                "chuva_mm": round((r_ec["chuva_mm"] + r_gf["chuva_mm"]) / 2.0, 1),
+                "umidade_min_pct": round((r_ec["ur_min"] + r_gf["ur_min"]) / 2.0),
+                "umidade_max_pct": round((r_ec["ur_max"] + r_gf["ur_max"]) / 2.0),
+                "vento_kmh": round((r_ec["vento_max"] + r_gf["vento_max"]) / 2.0),
+                "vento_dir": direcao,
+                "clima": r_gf["condicao"],
+                "icone": _MAPA_ICONE.get(cod, "nublado"),
+                "condicao": r_gf["condicao"],
+            }
+            fonte_tempo = "ECMWF/IFS + NOAA/GFS (PoaClima indisponível)"
+
+        saida_dias.append({
+            "data": d.isoformat(), "dia_semana": DIAS_SEMANA[d.weekday()],
+            "nivel": nivel, **{k: protocolo.NIVEIS[nivel][k] for k in ("nome", "cor_fg", "cor_bg", "acao", "publico")},
+            "motivo": diag["motivo"], "gatilho": diag["gatilho"], "janela": diag["janela"],
+            "janela_ini": diag["janela_ini"], "janela_fim": diag["janela_fim"],
+            "tmin_noite": diag["tmin_noite"], "noite_quente": diag["noite_quente"], "noite_fresca": diag["recuperacao_plena"],
+            "pico_ibutg": diag["pico_ibutg"],
+            "horas_utci_28": diag["horas_n2"], "horas_utci_32": diag["horas_32"], "horas_utci_34": diag["horas_n3"],
+            "horas_utci_38": diag["horas_n4"], "horas_utci_48": diag["horas_n5"],
+            "temp": {"min": poa["temp_min_c"], "h_min": None, "max": poa["temp_max_c"], "h_max": None},
+            "temp_openmeteo": t_mme,
+            "sensacao": extremos(dia_m, "UTCI_MME"), "uv": resumo_uv(dia_gf),
+            "clima": poa["clima"], "icone": poa["icone"], "condicao": poa["condicao"],
+            "tempo": fonte_tempo,
+            "vento_max": poa["vento_kmh"], "vento_dir": poa["vento_dir"],
+            "vento_openmeteo": {"max": max(r_ec["vento_max"], r_gf["vento_max"]),
+                                "rajada_max": max(r_ec["rajada_max"], r_gf["rajada_max"]),
+                                "dir": direcao, "seta": seta},
+            "poaclima": poa,
+            "modelos": {"ecmwf": r_ec, "gfs": r_gf},
+        })
 
     print("Coletando avisos meteorológicos do INMET para Porto Alegre...")
     try:
