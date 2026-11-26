@@ -365,14 +365,13 @@
     const d = DIAS[selecionado], atual = sensacaoAgora(d), ehAtual = atual !== null;
     const valor = ehAtual ? atual.valor : d.sensacao.max;
     const hora = ehAtual ? atual.hora : d.sensacao.h_max;
-    const fx = faixa(valor);
     const grupos = FAIXAS.map((f) => ({ f, periodos: segmentosFaixa(d, f) })).filter((g) => g.periodos.length)
       .sort((a, b) => a.f.de - b.f.de);
     trocar($("sensacao"),
       el("h2", { class: "rotulo" }, ehAtual ? "Sensação térmica atual" : "Sensação térmica máxima",
         el("small", {}, ehAtual ? "" : "pico previsto para o dia selecionado")),
-      el("div", { class: "valor" }, el("strong", {}, grau(valor)),
-        el("span", { class: "pilula-faixa", style: `background:${fx.cor};color:${textoFaixa(fx)}` }, fx.nome),
+      el("div", { class: "valor" },
+        el("strong", {}, grau(valor)),
         el("span", { class: "hora" }, `às ${hora}`)),
       ehAtual ? el("p", { class: "maximo" }, `Máxima prevista hoje: ${grau(d.sensacao.max)} às ${d.sensacao.h_max}`) : null,
       regua(valor, ehAtual),
@@ -380,8 +379,8 @@
       el("div", { class: "horas", "aria-label": "Horas e períodos em cada faixa de estresse térmico" }, ...grupos.map(({ f, periodos }) => {
         const total = periodos.reduce((n, g) => n + g.fim - g.inicio + 1, 0), periodo = textoPeriodos(periodos);
         const rotulo = f.nome === "Sem estresse térmico"
-  ? "Sem estresse térmico"
-  : `Estresse térmico ${f.rotulo.replace(/^estresse\s+/, "")}`;
+          ? "Sem estresse térmico"
+          : `Estresse térmico ${f.rotulo.replace(/^estresse\s+/, "")}`;
         return el("div", { class: "faixa-horas", style: `background:${f.cor};color:${textoFaixa(f)}`, title: `${total} h · ${f.rotulo} · ${periodo}` },
           el("div", { class: "resumo-faixa" }, el("b", {}, `${total} h`), el("span", { class: "texto-resumo" }, " do dia")),
           listaPeriodos(periodos),
