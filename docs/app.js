@@ -180,7 +180,8 @@
   }
 
   // -------------------- compartilhamento no zap ------------------------------
-  const URL_PAINEL = "https://ciscpoa.github.io/Painel_Sensacao_Termica_POA/";
+  const VERSAO_LINK = P.gerado_em.slice(0, 16).replace(/[-:T]/g, "");
+  const URL_PAINEL = `https://ciscpoa.github.io/Painel_Sensacao_Termica_POA/?v=${VERSAO_LINK}`;
   const textoCompartilhamento = (d) => {
     const atual = sensacaoAgora(d);
     const partes = [`${rotuloDia(d)}, ${ddmmaaaa(d.data)}: Calor Nível ${d.nivel}.`];
