@@ -326,9 +326,38 @@ thead th { position: sticky; top: 0; background: var(--superficie); color: var(-
 @media (min-width: 620px) { .niveis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cuidados { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .nivel-linha { grid-template-columns: minmax(0, 1fr); } .nivel-linha .chip { grid-row: auto; } }
 
-details.tecnico { background: var(--superficie); border: 1px solid var(--borda); border-radius: 18px; padding: 16px 20px; margin-top: clamp(34px, 4vw, 54px); box-shadow: var(--sombra-leve); }
+details.tecnico { background: var(--superficie); border: 1px solid var(--borda); border-radius: 18px; padding: 12px 20px; margin-top: clamp(34px, 4vw, 54px); box-shadow: var(--sombra-leve); }
 details.tecnico + details.tecnico { margin-top: 14px; }
-details.tecnico summary { min-height: 44px; cursor: pointer; font-family: var(--f-titulo); font-weight: 650; font-size: 19px; }
+details.tecnico summary {
+  min-height: 44px;
+  cursor: pointer;
+  font-family: var(--f-titulo);
+  font-weight: 650;
+  font-size: 19px;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+details.tecnico summary::-webkit-details-marker { display: none; }
+details.tecnico summary::before {
+  content: "▶";
+  font-size: 12px;
+  color: var(--marca);
+  transition: transform 150ms ease-out;
+  flex: none;
+}
+details.tecnico[open] summary::before { transform: rotate(90deg); }
+details.tecnico summary::after {
+  content: "Clique para abrir";
+  margin-left: auto;
+  font-family: var(--f-corpo);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tinta2);
+}
+details.tecnico[open] summary::after { content: "Clique para fechar"; }
 details.tecnico p, details.tecnico li { font-size: 14px; max-width: 75ch; }
 details.tecnico .vista-tabela td:first-child, details.tecnico .vista-tabela th:first-child { position: sticky; left: 0; background: var(--superficie); z-index: 1; }
 details.tecnico code { font-size: 14px; overflow-wrap: anywhere; }
